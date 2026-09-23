@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E6B66">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AccountStore">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1EF; --surface:#FFFFFF; --surface-2:#F6F8F7; --ink:#16202A; --muted:#5B6873; --line:#DCE2E0;
+  --primary:#0E6B66; --primary-ink:#FFFFFF; --primary-soft:#DDEFEC;
+  --venc:#C2372E; --venc-soft:#FBE4E1; --venc-ink:#9E2920;
+  --hoy:#D4700F; --pronto-soft:#FCEFD3; --pronto-ink:#855300;
+  --semana-soft:#E2EEF6; --semana-ink:#24597D;
+  --ok-soft:#E1F0E6; --ok-ink:#22613B;
+  --baja-soft:#E8EBEC; --baja-ink:#66727C;
+  --wa:#1C9F54; --wa-ink:#FFFFFF;
+  --sombra:0 1px 2px rgba(22,32,42,.06), 0 6px 20px rgba(22,32,42,.08);
+  --r-s:8px; --r-m:12px; --r-l:18px;
+  --nav-h:64px;
+  font-family:'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0E1316; --surface:#172026; --surface-2:#1C262D; --ink:#E4EAED; --muted:#91A0AA; --line:#27333B;
+    --primary:#3DB2A8; --primary-ink:#06201E; --primary-soft:#173A37;
+    --venc:#E0584E; --venc-soft:#3A1D1B; --venc-ink:#F4A39C;
+    --hoy:#E88A2C; --pronto-soft:#3A2D14; --pronto-ink:#F0C473;
+    --semana-soft:#18303F; --semana-ink:#94C3E3;
+    --ok-soft:#173127; --ok-ink:#8FD3A8;
+    --baja-soft:#232C33; --baja-ink:#8E9AA3;
+    --wa:#25B864; --wa-ink:#04210F;
+    --sombra:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-size:16px;line-height:1.4;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+[hidden]{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+
+/* Estructura */
+.app{display:flex;flex-direction:column;min-height:100dvh;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:5;background:var(--paper);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:12px}
+.top-txt{flex:1;min-width:0}
+.top h1{margin:0;font-size:1.5rem;line-height:1.15;font-weight:700;letter-spacing:-.01em}
+.top p{margin:2px 0 0;color:var(--muted);font-size:.875rem}
+.barra{position:fixed;top:0;left:0;right:0;height:3px;z-index:50;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .2s}
+.barra.on{opacity:1}
+.barra::after{content:"";position:absolute;inset:0;width:40%;background:var(--primary);animation:carga 1s ease-in-out infinite}
+@keyframes carga{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+main{flex:1}
+.vista{display:none;padding:0 12px 24px}
+.vista.activa{display:block}
+
+/* Navegación */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tab{height:var(--nav-h);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:.75rem;font-weight:500;position:relative}
+.tab svg{width:24px;height:24px}
+.tab[aria-selected="true"]{color:var(--primary)}
+.tab[aria-selected="true"]::before{content:"";position:absolute;top:0;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--primary)}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:var(--r-m);border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:.9375rem;text-decoration:none;color:var(--ink)}
+.btn svg{width:20px;height:20px;flex:none}
+.btn-pri{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn-wa{background:var(--wa);border-color:var(--wa);color:var(--wa-ink)}
+.btn-bloque{width:100%}
+.btn:disabled{opacity:.55}
+.ic{width:44px;height:44px;border-radius:50%;border:0;background:none;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);text-decoration:none;flex:none}
+.ic svg{width:22px;height:22px}
+.ic-wa{color:var(--wa)}
+.link{border:0;background:none;padding:12px 4px;text-align:left;font-weight:600;color:var(--primary);font-size:.9375rem}
+.link.peligro{color:var(--venc)}
+
+/* Chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 4px 10px;margin:0 -12px;padding-left:12px;padding-right:12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:.875rem;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.chip b{font-weight:700;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.c-vencido b{color:var(--venc)}
+.chip.c-hoy b{color:var(--hoy)}
+.chip[aria-pressed="true"] b{color:inherit}
+
+/* Listas de clientes */
+.lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.fila{display:flex;align-items:center;background:var(--surface);border-radius:var(--r-m);padding-right:4px}
+.fila-main{flex:1;min-width:0;display:flex;align-items:stretch;gap:12px;border:0;background:none;text-align:left;padding:10px 4px 10px 10px}
+.fila-txt{min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.nom{font-weight:600;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{color:var(--muted);font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;gap:12px;font-size:.8125rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.fila-acc{display:flex;align-items:center}
+
+/* La columna de días: el dato que manda */
+.dias{flex:none;width:52px;border-radius:var(--r-s);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0;font-variant-numeric:tabular-nums}
+.dias b{font-size:1.375rem;line-height:1;font-weight:700;letter-spacing:-.02em}
+.dias small{font-size:.6875rem;margin-top:3px;font-weight:500}
+.t-vencido{background:var(--venc);color:#fff}
+.t-hoy{background:var(--hoy);color:#fff}
+.t-pronto{background:var(--pronto-soft);color:var(--pronto-ink)}
+.t-semana{background:var(--semana-soft);color:var(--semana-ink)}
+.t-ok{background:var(--ok-soft);color:var(--ok-ink)}
+.t-baja,.t-sin{background:var(--baja-soft);color:var(--baja-ink)}
+
+.vacio{padding:40px 16px;text-align:center;color:var(--muted)}
+.vacio strong{display:block;color:var(--ink);font-size:1.0625rem;margin-bottom:4px}
+.mas{margin:12px auto 0;display:flex}
+
+/* Buscador */
+.buscador{position:sticky;top:var(--top-h,66px);z-index:4;background:var(--paper);padding:2px 0 8px}
+.campo-busca{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:0 12px;min-height:48px}
+.campo-busca svg{width:20px;height:20px;color:var(--muted);flex:none}
+.campo-busca input{flex:1;border:0;background:none;outline:none;font-size:1rem;min-width:0;padding:12px 0}
+
+/* Hojas de servicio */
+.resumen{font-size:.875rem;color:var(--muted);margin:2px 4px 10px}
+.cuenta{background:var(--surface);border-radius:var(--r-l);padding:14px 14px 6px;margin-bottom:10px;scroll-margin-top:calc(var(--top-h,66px) + 64px)}
+.cuenta.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--primary)}100%{box-shadow:0 0 0 0 transparent}}
+.cuenta-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cuenta-cab h3{margin:0;font-size:1.0625rem;font-weight:700}
+.cuenta-cab p{margin:1px 0 0;font-size:.8125rem;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+.pill{font-size:.75rem;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.libre{background:var(--primary-soft);color:var(--primary)}
+.cred{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.cred-item{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-height:36px;border:0;border-radius:var(--r-s);background:var(--surface-2);padding:0 10px;font-size:.875rem}
+.cred-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cred-item svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.cuenta-meta{margin:8px 0 0;font-size:.8125rem;color:var(--muted)}
+.lugares{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--line)}
+.lugar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:6px 2px}
+.lugares li:last-child .lugar{border-bottom:0}
+.lugar-nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.lugar.libre .lugar-nom{color:var(--muted);font-weight:400}
+.lugar-acc{font-size:.8125rem;font-weight:600;color:var(--primary)}
+.mini{flex:none;font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
+.alerta{font-style:normal;font-size:.75rem;color:var(--venc);font-weight:600;margin-left:6px}
+.cuenta-pie{display:flex;flex-wrap:wrap;gap:0 16px;border-top:1px solid var(--line)}
+.cuenta-pie:empty{display:none}
+.pill.inactiva{background:var(--baja-soft);color:var(--baja-ink)}
+.cuenta.inactiva{opacity:.8}
+.pill.cerrar{background:var(--venc-soft);color:var(--venc-ink)}
+.marca-cerrar{flex:none;font-size:.6875rem;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--venc-soft);color:var(--venc-ink);margin-left:6px}
+.lugar-der{display:flex;align-items:center;gap:4px;flex:none}
+.tarjeta > .etq{font-size:.875rem;font-weight:600}
+.pend-hoja{margin-bottom:18px}
+.pend-hoja > h3{margin:4px 2px 8px;font-size:1rem}
+.pend-fila{display:flex;align-items:center;gap:10px;min-height:48px;border-bottom:1px solid var(--line);padding:6px 2px}
+.pend-fila:last-child{border-bottom:0}
+.pend-fila > span{flex:1;min-width:0}
+.pend-fila b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pend-fila small{color:var(--muted);font-size:.8125rem}
+.btn-pend{width:100%;margin-bottom:10px;justify-content:space-between}
+.btn-pend b{background:var(--venc);color:#fff;border-radius:999px;padding:1px 9px;font-size:.8125rem}
+.lugar.marcado{background:var(--primary-soft)}
+.banner{position:sticky;top:var(--top-h,66px);z-index:4;display:flex;align-items:center;gap:10px;background:var(--primary);color:var(--primary-ink);border-radius:var(--r-m);padding:10px 8px 10px 14px;margin-bottom:10px;font-size:.9375rem}
+.banner span{flex:1}
+.banner button{border:0;background:rgba(255,255,255,.18);color:inherit;border-radius:var(--r-s);min-height:36px;padding:0 12px;font-weight:600}
+
+/* Formularios */
+.form{display:flex;flex-direction:column;gap:14px}
+.form .tarjeta{background:var(--surface);border-radius:var(--r-l);padding:14px;display:flex;flex-direction:column;gap:14px}
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo label,.campo .etq{font-size:.875rem;font-weight:600}
+.campo input,.campo select{min-height:48px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);padding:0 12px;font-size:1rem;width:100%}
+.campo input:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-soft)}
+.ayuda{font-size:.8125rem;color:var(--muted)}
+.campo .error{font-size:.8125rem;color:var(--venc);font-weight:600}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sugs{display:flex;gap:6px;overflow-x:auto;margin:0 -14px;padding:2px 14px;scrollbar-width:none}
+.sugs::-webkit-scrollbar{display:none}
+.sugs.dosfilas{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);grid-auto-columns:max-content}
+.variantes{background:var(--surface-2);border-radius:var(--r-m);padding:10px;display:flex;flex-direction:column;gap:8px}
+.variantes p{margin:0;font-size:.8125rem;color:var(--muted)}
+.variantes .sugs{flex-wrap:wrap;margin:0;padding:0;overflow:visible}
+.variantes .sug{background:var(--surface)}
+.sug{flex:none;white-space:nowrap;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-size:.8125rem}
+.pservs{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.pserv{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);padding:2px 2px 2px 12px;font-size:.875rem}
+.pserv b{font-weight:600;margin-right:4px}
+.pserv i{font-style:normal;font-weight:700;min-width:16px;text-align:center;font-variant-numeric:tabular-nums}
+.pserv button{width:30px;height:30px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:1rem;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.pserv button.quitar{color:var(--venc)}
+.meses{display:flex;gap:6px}
+.meses label{flex:1}
+.meses input{position:absolute;opacity:0;pointer-events:none}
+.meses span{display:flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--line);border-radius:var(--r-m);font-weight:600;background:var(--surface)}
+.meses input:checked + span{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.meses input:focus-visible + span{outline:2px solid var(--primary);outline-offset:2px}
+.modos{display:flex;flex-direction:column;gap:6px}
+.modo{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r-m);padding:12px;background:var(--surface)}
+.modo input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--primary);flex:none}
+.modo b{display:block;font-weight:600}
+.modo small{color:var(--muted);font-size:.8125rem;font-weight:400;display:block;margin-top:2px}
+.modo:has(input:checked){border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.check{display:flex;align-items:center;gap:10px;font-size:.9375rem;min-height:44px}
+.check input{width:22px;height:22px;accent-color:var(--primary)}
+.existe{border:1px solid var(--primary);background:var(--primary-soft);border-radius:var(--r-m);padding:10px}
+.existe p{margin:0 2px 8px;font-size:.875rem}
+.existe ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.existe li{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:var(--r-s);padding:8px}
+.existe .dias{width:44px;padding:4px 0}
+.existe .dias b{font-size:1.125rem}
+.ex-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.ex-txt b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex-txt small{color:var(--muted);font-size:.8125rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ex-usar{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:0}
+.existe .ex-ayuda{font-size:.8125rem;color:var(--muted);font-weight:400}
+.req{color:var(--venc);margin-left:2px}
+.campo.falta input{border-color:var(--venc);box-shadow:0 0 0 3px var(--venc-soft)}
+.campo.falta label{color:var(--venc)}
+.campo input[readonly]{background:var(--surface-2);color:var(--muted)}
+.btn-sm{min-height:38px;padding:0 12px;font-size:.875rem;flex:none}
+.previa{background:var(--surface-2);border-radius:var(--r-m);padding:12px 14px;font-size:.9375rem}
+.previa b{font-size:1.125rem}
+
+/* Hoja inferior */
+.hoja{position:fixed;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.hoja-fondo{position:absolute;inset:0;background:rgba(10,16,20,.45);opacity:0;transition:opacity .2s}
+.hoja-panel{position:relative;width:100%;max-width:640px;max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--paper);border-radius:var(--r-l) var(--r-l) 0 0;padding:8px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.hoja.abierta .hoja-fondo{opacity:1}
+.hoja.abierta .hoja-panel{transform:none}
+.asa{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px}
+.hoja-cab{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.hoja-tit{flex:1;min-width:0}
+.hoja-cab h2{margin:0;font-size:1.25rem;line-height:1.2;font-weight:700;overflow-wrap:anywhere}
+.hoja-cab p{margin:2px 0 0;color:var(--muted);font-size:.875rem}
+.acciones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.acciones .ancho{grid-column:1 / -1}
+.datos{background:var(--surface);border-radius:var(--r-l);margin:0 0 10px;padding:4px 14px}
+.datos div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.datos div:last-child{border-bottom:0}
+.datos dt{color:var(--muted);font-size:.875rem;flex:none}
+.datos dd{margin:0;text-align:right;font-weight:500;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.datos a{color:var(--primary);text-decoration:none}
+.secundarias{display:flex;flex-direction:column;align-items:flex-start}
+.ubic{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}
+.ubic button{width:100%;text-align:left;border:0;border-radius:var(--r-m);background:var(--surface);padding:12px 14px;display:flex;justify-content:space-between;gap:10px}
+.ubic small{color:var(--muted)}
+.exito{text-align:center;padding:8px 0 4px}
+.exito .marca{width:56px;height:56px;border-radius:50%;background:var(--ok-soft);color:var(--ok-ink);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.exito .marca svg{width:28px;height:28px}
+.exito h2{margin:0 0 4px;font-size:1.25rem}
+.exito p{margin:0 0 16px;color:var(--muted)}
+.pila{display:flex;flex-direction:column;gap:8px}
+
+/* Confirmación y avisos */
+.confirma{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(10,16,20,.5)}
+.confirma-caja{background:var(--surface);border-radius:var(--r-l);padding:20px;width:100%;max-width:420px;max-height:88dvh;overflow-y:auto;box-shadow:var(--sombra)}
+.confirma-caja > p{margin:0 0 18px;font-size:1rem}
+.conf-tit{margin:0 0 12px;font-size:1.125rem;font-weight:700}
+.conf-dest{display:flex;align-items:baseline;gap:8px;background:var(--primary-soft);color:var(--primary);border-radius:var(--r-m);padding:10px 14px;margin-bottom:12px;font-weight:600}
+.conf-dest.alerta{background:var(--venc-soft);color:var(--venc-ink)}
+.conf-num{font-size:2rem;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.conf-datos{margin:0 0 12px}
+.conf-datos div{display:flex;justify-content:space-between;gap:14px;padding:8px 0;border-bottom:1px solid var(--line)}
+.conf-datos div:last-child{border-bottom:0}
+.conf-datos dt{color:var(--muted);font-size:.875rem;flex:none}
+.conf-datos dd{margin:0;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.conf-datos dd s{color:var(--muted)}
+.conf-aviso{margin:0 0 10px;padding:10px 12px;border-radius:var(--r-s);background:var(--pronto-soft);color:var(--pronto-ink);font-size:.875rem;font-weight:600}
+.conf-aviso.fuerte{background:var(--venc-soft);color:var(--venc-ink)}
+.confirma-caja .fila-btn{display:flex;gap:8px;justify-content:flex-end}
+.btn-peligro{background:var(--venc);border-color:var(--venc);color:#fff}
+.toast{position:fixed;left:12px;right:12px;bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));z-index:45;display:flex;justify-content:center;pointer-events:none}
+.toast div{background:var(--ink);color:var(--paper);padding:12px 16px;border-radius:var(--r-m);font-size:.9375rem;box-shadow:var(--sombra);max-width:520px;opacity:0;transform:translateY(8px);transition:opacity .18s,transform .18s}
+.toast.on div{opacity:1;transform:none}
+.toast.error div{background:var(--venc);color:#fff}
+
+.login{position:fixed;inset:0;z-index:70;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:24px}
+.login-caja{width:100%;max-width:340px;text-align:center}
+.login-marca{font-weight:700;color:var(--primary);margin-bottom:4px}
+.login h1{font-size:1.5rem;margin:0 0 20px}
+.login input{width:100%;min-height:58px;text-align:center;font-size:1.75rem;letter-spacing:.35em;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);margin-bottom:12px;padding:0 12px}
+.login input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.login-error{color:var(--venc);font-weight:600;min-height:1.4em;margin:12px 0 0}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.9375rem}
+.esqueleto{height:74px;border-radius:var(--r-m);background:var(--surface);margin-bottom:6px;opacity:.6}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+@media (min-width:700px){
+  .vista{max-width:680px;margin:0 auto}
+  .top{max-width:704px;margin:0 auto;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="barra" id="barra"></div>
+<div class="login" id="login" hidden>
+  <div class="login-caja">
+    <div class="login-marca">AccountStore</div>
+    <h1>Ingresá tu PIN</h1>
+    <form id="fLogin" autocomplete="off">
+      <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" aria-label="PIN" autocomplete="current-password">
+      <button class="btn btn-pri btn-bloque" type="submit">Entrar</button>
+    </form>
+    <p class="login-error" id="loginError" role="alert"></p>
+  </div>
+</div>
+<div class="app">
+  <header class="top">
+    <div class="top-txt">
+      <h1 id="titulo">Vencimientos</h1>
+      <p id="subtitulo">Cargando la planilla…</p>
+    </div>
+    <button class="ic" id="btnUsuario" data-accion="sesion" aria-label="Sesión" hidden><span class="avatar" id="avatar"></span></button>
+    <button class="ic" id="btnActualizar" data-accion="actualizar" aria-label="Actualizar datos de la planilla"></button>
+  </header>
+
+  <main>
+    <section class="vista activa" id="v-venc" aria-labelledby="titulo">
+      <div class="chips" id="chipsVenc" role="group" aria-label="Filtrar por vencimiento"></div>
+      <ul class="lista" id="listaVenc"></ul>
+    </section>
+
+    <section class="vista" id="v-clientes">
+      <div class="buscador">
+        <div class="campo-busca"><span id="icoBusca"></span><input id="qClientes" type="search" placeholder="Nombre, teléfono, correo o servicio" autocomplete="off" aria-label="Buscar clientes"></div>
+      </div>
+      <div class="chips" id="chipsClientes" role="group" aria-label="Filtrar clientes"></div>
+      <ul class="lista" id="listaClientes"></ul>
+    </section>
+
+    <section class="vista" id="v-cuentas">
+      <div id="bannerAsignar"></div>
+      <div class="chips" id="chipsServicios" role="group" aria-label="Elegir servicio"></div>
+      <div id="cuentasCuerpo"></div>
+    </section>
+
+    <section class="vista" id="v-nuevo">
+      <div id="nuevoCuerpo"></div>
+    </section>
+  </main>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button class="tab" role="tab" data-accion="vista" data-v="venc" aria-selected="true"><span data-ico="cal"></span>Vencen</button>
+    <button class="tab" role="tab" data-accion="vista" data-v="clientes" aria-selected="false"><span data-ico="gente"></span>Clientes</button>
+    <button class="tab" role="tab" data-accion="vista" data-v="cuentas" aria-selected="false"><span data-ico="llave"></span>Cuentas</button>
+    <button class="tab" role="tab" data-accion="vista" data-v="nuevo" aria-selected="false"><span data-ico="mas"></span>Nuevo</button>
+  </nav>
+</div>
+
+<div class="hoja" id="hoja" hidden>
+  <div class="hoja-fondo" data-accion="cerrar"></div>
+  <div class="hoja-panel" id="hojaPanel" role="dialog" aria-modal="true"></div>
+</div>
+<div class="confirma" id="confirma" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><div></div></div>
+
+<script>
+/* ================================================================
+   Íconos
+   ================================================================ */
+const svg = (d, extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
+const ICON = {
+  cal: svg('<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v3l2 1.5"/>'),
+  gente: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.2 14.8c1.8.8 2.9 2.5 3.3 5.2"/>'),
+  llave: svg('<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5l2.5 2.5M14 9l2 2"/>'),
+  mas: svg('<circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c.6-3.6 3.2-5.5 6.5-5.5 1.4 0 2.7.3 3.7 1M18.5 13v7M15 16.5h7"/>'),
+  wa: svg('<path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.5-4.4a8.4 8.4 0 1 1 15.5-4.5Z"/><path d="M9 8.6c.2 2.9 2.6 5.3 5.4 5.6l1-1.2-1.8-1-.9.8c-1-.4-1.8-1.2-2.2-2.2l.8-.9-1-1.8Z" fill="currentColor" stroke-width="1"/>'),
+  renovar: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'),
+  copiar: svg('<rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/>'),
+  ojo: svg('<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>'),
+  cerrar: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
+  actualizar: svg('<path d="M20.5 12a8.5 8.5 0 0 1-14.9 5.6M3.5 12A8.5 8.5 0 0 1 18.4 6.4"/><path d="M18.5 2.5v4h-4M5.5 21.5v-4h4"/>'),
+  buscar: svg('<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.5-4.5"/>'),
+  ok: svg('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+  tel: svg('<path d="M5 3.5h3.5l1.8 4.5-2.3 1.4a11 11 0 0 0 6.6 6.6l1.4-2.3 4.5 1.8V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.1 1.5 1.5 0 0 1 5 3.5Z"/>')
+};
+
+/* ================================================================
+   Estado y utilidades
+   ================================================================ */
+const S = {
+  hoy: '', clientes: [], porRow: new Map(), porNombre: new Map(), servicios: [], leyenda: [], msgs: {},
+  vista: 'venc', filtroVenc: null, filtroCli: 'activos', q: '', limCli: 50,
+  hojaSel: null, cacheServ: {}, servViejo: {}, fCuentas: 'todas', qCuentas: '', limCuentas: 25,
+  asignando: null, cargado: false, perfilAuto: true, token: '', usuario: '', permisos: {}, reglas: { sinDispositivo: [], conCorreo: [] }, bajasCargadas: false, serviciosCargados: false
+};
+const CAMPOS = ['row','nombre','id','perfil','fecha','monto','tel','correo','servicios','dispositivos','pin','pins','venc','dias','estado','meses'];
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9@.]+/g, ' ').trim();
+const soloNombre = s => String(s ?? '').replace(/[^\p{L}\p{N}\s.'-]/gu, '').replace(/\s+/g, ' ').trim();
+const claveNombre = s => String(s ?? '').trim().toLowerCase();
+const digitos = s => String(s ?? '').replace(/\D/g, '');
+const miles = n => String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const gs = n => typeof n === 'number' ? (n < 0 ? '-' : '') + 'Gs. ' + miles(n) : String(n || '');
+const pISO = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').map(Number) : null;
+const dmy = iso => { const p = pISO(iso); return p ? `${String(p[2]).padStart(2,'0')}/${String(p[1]).padStart(2,'0')}/${p[0]}` : (iso || ''); };
+function sumarMeses(iso, n) {
+  const [y, m, d] = pISO(iso);
+  const base = new Date(Date.UTC(y, m - 1 + n, 1));
+  const ult = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, 0)).getUTCDate();
+  base.setUTCDate(Math.min(d, ult));
+  return base.toISOString().slice(0, 10);
+}
+function telNormal(s) {
+  let d = digitos(s);
+  if (!d) return '';
+  if (d[0] === '0') d = '595' + d.slice(1);
+  else if (d.length === 9 && d[0] === '9') d = '595' + d;
+  return d;
+}
+const waLink = (tel, texto) => 'https://wa.me/' + telNormal(tel) + (texto ? '?text=' + encodeURIComponent(texto) : '');
+const plural = (n, a, b) => n === 1 ? a : b;
+
+function parseServicios(txt) {
+  return String(txt || '').split(',').map(x => x.trim()).filter(x => x && x !== '-').map(s => {
+    const m = s.match(/^(.*?)-(\d+)$/);
+    return m ? { n: m[1].trim(), c: Math.max(1, Number(m[2])) } : { n: s, c: 1 };
+  });
+}
+const textoServicios = items => items.map(i => i.c > 1 ? `${i.n}-${i.c}` : i.n).join(', ');
+const totalPerfiles = items => items.reduce((a, i) => a + i.c, 0);
+
+// Emoji del nombre: el del primer servicio según la leyenda de RegistrodeDatos
+const RX_EMOJI_FIN = /[\p{Extended_Pictographic}\p{Emoji_Modifier}\uFE0F\u200D\u20E3]+$/u;
+const claveServ = s => norm(String(s || '').split('-')[0]).replace(/ /g, '');
+const sinEmojis = n => String(n || '').trim().replace(RX_EMOJI_FIN, '').trimEnd();
+function emojiServicio(servicio) {
+  const k = claveServ(servicio);
+  if (!k) return '';
+  let mejor = '', largo = 0;
+  for (const [sv, em] of S.leyenda) {
+    const kk = claveServ(sv);
+    if (kk && (k === kk || k.startsWith(kk) || kk.startsWith(k)) && kk.length > largo) { mejor = em; largo = kk.length; }
+  }
+  return mejor;
+}
+// Base + emoji, repitiendo el emoji si ese nombre ya existe (Zulma🔵 → Zulma🔵🔵)
+function nombreUnico(base, em, filaPropia = -1) {
+  let n = base + em;
+  for (let i = 0; i < 8; i++) {
+    const otro = S.porNombre.get(claveNombre(n));
+    if (!otro || otro.row === filaPropia) break;
+    n += em;
+  }
+  return n;
+}
+function aplicarEmoji(f, elegido) {
+  const base = sinEmojis(f.nombre.value);
+  if (!base) return;
+  const em = elegido || emojiServicio((parseServicios(f.servicios.value)[0] || {}).n);
+  if (!em) return;
+  const fila = f.dataset.row ? Number(f.dataset.row) : -1;
+  f.nombre.value = nombreUnico(base, em, fila);
+  f.dataset.finAuto = (f.nombre.value.match(RX_EMOJI_FIN) || [''])[0];
+  revisarNombre(f, fila);
+  revisarExistentes(f);
+}
+const emojiAuto = f => f && f.id === 'fNuevo' && f.dataset.auto !== '0';
+
+function dec(a) {
+  const c = {};
+  CAMPOS.forEach((k, i) => c[k] = a[i]);
+  c.busca = norm([c.nombre, c.tel, c.correo, c.servicios, c.id].join(' '));
+  c.nomN = norm(soloNombre(c.nombre));
+  return c;
+}
+function indexar() {
+  S._catalogo = null;
+  S.porRow = new Map(S.clientes.map(c => [c.row, c]));
+  S.porNombre = new Map(S.clientes.map(c => [claveNombre(c.nombre), c]));
+}
+function tipo(c) {
+  if (String(c.fecha).toUpperCase() === 'X' || c.estado === 'INACTIVO') return 'baja';
+  if (typeof c.dias !== 'number') return 'sin';
+  if (c.dias < 0) return 'vencido';
+  if (c.dias === 0) return 'hoy';
+  if (c.dias <= 3) return 'pronto';
+  if (c.dias <= 7) return 'semana';
+  return 'ok';
+}
+function tipoDias(d) {
+  if (isNaN(d)) return 'sin';
+  return d < 0 ? 'vencido' : d === 0 ? 'hoy' : d <= 3 ? 'pronto' : d <= 7 ? 'semana' : 'ok';
+}
+function badge(c) {
+  const t = tipo(c);
+  let num, lab;
+  if (t === 'baja') { num = '–'; lab = 'baja'; }
+  else if (t === 'sin') { num = '?'; lab = 'sin fecha'; }
+  else if (c.dias === 0) { num = '0'; lab = 'hoy'; }
+  else { num = String(c.dias); lab = Math.abs(c.dias) === 1 ? 'día' : 'días'; }
+  return `<span class="dias t-${t}"><b>${num}</b><small>${lab}</small></span>`;
+}
+// En los dados de baja, Monto -3 = días que se le esperó
+const esperoDias = c => tipo(c) === 'baja' && typeof c.monto === 'number' && c.monto < 0 && c.monto >= -60 ? -c.monto : 0;
+function estadoTexto(c) {
+  const t = tipo(c);
+  if (t === 'baja') return 'Dado de baja';
+  if (t === 'sin') return 'Sin fecha de activación';
+  if (c.dias < 0) return `Venció hace ${-c.dias} ${plural(-c.dias, 'día', 'días')}, el ${dmy(c.venc)}`;
+  if (c.dias === 0) return `Vence hoy, ${dmy(c.venc)}`;
+  return `Vence en ${c.dias} ${plural(c.dias, 'día', 'días')}, el ${dmy(c.venc)}`;
+}
+function primerNombre(c) { return (soloNombre(c.nombre).split(' ')[0] || '').trim(); }
+function llenar(tpl, c, venc) {
+  return String(tpl || '')
+    .replace(/\{nombre\}/g, primerNombre(c))
+    .replace(/\{servicios\}/g, c.servicios || '')
+    .replace(/\{vencimiento\}/g, dmy(venc || c.venc))
+    .replace(/\{monto\}/g, gs(c.monto));
+}
+const msgRecordatorio = c => llenar(tipo(c) === 'vencido' ? S.msgs.vencido : S.msgs.porVencer, c);
+
+/* ================================================================
+   Servidor
+   ================================================================ */
+let pendientes = 0;
+/*
+ * Dirección de la API: el link /exec de tu implementación de Apps Script.
+ * Solo se usa en la app instalada (GitHub Pages); dentro de Apps Script no hace falta.
+ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzDxrFjP9IHW4Xa-3o4onyOkU7e0o5h1RMyc-BSjddQSC_2eVeKhjD3NisHXEu3uTZf/exec';
+const EN_APPS_SCRIPT = typeof google !== 'undefined' && !!(google.script && google.script.run);
+
+function llamar(fn, args) {
+  pendientes++; $('#barra').classList.add('on');
+  const fin = () => { if (--pendientes <= 0) { pendientes = 0; $('#barra').classList.remove('on'); } };
+  if (EN_APPS_SCRIPT) {
+    return new Promise((ok, mal) => {
+      google.script.run
+        .withSuccessHandler(r => { fin(); ok(r); })
+        .withFailureHandler(e => { fin(); mal(e); })[fn](...args);
+    });
+  }
+  // App instalada: la misma llamada, por internet a la API
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // así no hace falta permiso extra (CORS)
+    body: JSON.stringify({ fn, args })
+  }).then(res => {
+    if (!res.ok) throw new Error('La planilla no respondió (error ' + res.status + ').');
+    return res.json();
+  }).then(j => {
+    if (!j.ok) throw new Error(j.error);
+    return j.r;
+  }, e => {
+    throw e instanceof TypeError ? new Error('Sin conexión. Revisá internet e intentá de nuevo.') : e;
+  }).finally(fin);
+}
+const msgError = e => (e && e.message ? e.message : String(e)).replace(/^Exception:\s*/, '').replace(/^CAMBIADO:\s*/, '');
+// Lo que la app cree que tiene el cliente: el servidor verifica que siga igual antes de sumar
+const esperado = c => ({ fecha: c.fecha, meses: c.meses });
+// Permisos del usuario: si el servidor no dice nada, se asume que puede
+const puede = accion => S.permisos[accion] !== false;
+// Toda llamada lleva la sesión; si venció, vuelve a pedir el PIN
+function api(fn, ...args) {
+  return llamar(fn, [S.token, ...args]).catch(e => {
+    if (/CAMBIADO:/.test(e && e.message)) { hoja.cerrar(); setTimeout(() => cargar(true, true), 300); }
+    if (/(^|:\s*)SESION$/.test(msgError(e))) {
+      sesionVencida();
+      throw new Error('Tu sesión venció. Entrá de nuevo con tu PIN.');
+    }
+    throw e;
+  });
+}
+
+/* ================================================================
+   Sesión (PIN)
+   ================================================================ */
+const sesionGuardada = {
+  get() { try { return localStorage.getItem('as_sesion') || ''; } catch (e) { return ''; } },
+  set(v) { try { v ? localStorage.setItem('as_sesion', v) : localStorage.removeItem('as_sesion'); } catch (e) { } }
+};
+function mostrarLogin(mensaje = '') {
+  hoja.cerrar();
+  $('#confirma').hidden = true;
+  $('#login').hidden = false;
+  $('#loginError').textContent = mensaje;
+  $('#pin').value = '';
+  setTimeout(() => $('#pin').focus(), 50);
+}
+function sesionVencida() {
+  S.token = ''; sesionGuardada.set('');
+  mostrarLogin('Tu sesión venció. Ingresá tu PIN de nuevo.');
+}
+function mostrarUsuario() {
+  $('#btnUsuario').hidden = !S.usuario;
+  $('#avatar').textContent = (S.usuario || '?').trim().charAt(0).toUpperCase();
+  $('#btnUsuario').setAttribute('aria-label', 'Sesión de ' + (S.usuario || ''));
+}
+async function entrarPIN(f) {
+  const pin = f.pin.value.trim();
+  if (!/^\d{6,8}$/.test(pin)) { $('#loginError').textContent = 'El PIN tiene de 6 a 8 números.'; return; }
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Entrando…';
+  try {
+    const r = await llamar('entrar', [pin]);
+    S.token = r.token; S.usuario = r.usuario;
+    sesionGuardada.set(r.token);
+    $('#login').hidden = true;
+    mostrarUsuario();
+    if (S.cargado) toast('Hola ' + r.usuario); else cargar();
+  } catch (e) {
+    $('#loginError').textContent = msgError(e);
+    f.pin.value = ''; f.pin.focus();
+  } finally { b.disabled = false; b.textContent = 'Entrar'; }
+}
+async function cerrarSesion() {
+  if (!await confirmar(`¿Cerrar la sesión de <b>${esc(S.usuario)}</b>? Para volver a entrar vas a necesitar el PIN.`, 'Cerrar sesión')) return;
+  S.token = ''; S.usuario = ''; S.permisos = {}; sesionGuardada.set(''); datosLocales.borrar(); servLocales.borrar();
+  S.clientes = []; S.cacheServ = {}; S.servViejo = {}; S.cargado = false; S.hojaSel = null; S.asignando = null;
+  indexar();
+  ['#listaVenc', '#listaClientes', '#cuentasCuerpo', '#nuevoCuerpo', '#chipsVenc', '#chipsClientes', '#chipsServicios'].forEach(x => $(x).innerHTML = '');
+  mostrarUsuario();
+  mostrarLogin();
+}
+
+/* ================================================================
+   Avisos, confirmación y hoja inferior
+   ================================================================ */
+let toastT;
+function toast(texto, error = false) {
+  const t = $('#toast');
+  t.firstElementChild.textContent = texto;
+  t.classList.toggle('error', error);
+  t.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('on'), error ? 5000 : 2600);
+}
+function confirmar(texto, boton = 'Confirmar', peligro = false) {
+  return confirmarHTML(`<p>${texto}</p>`, boton, peligro);
+}
+/* Resumen antes de guardar: destacado (los meses), filas [etiqueta, valor HTML] y avisos [texto, fuerte] */
+function confirmarResumen(titulo, destacado, filas, avisos, boton) {
+  const html = `<h3 class="conf-tit">${esc(titulo)}</h3>
+    ${destacado ? `<div class="conf-dest ${/data-alerta/.test(destacado) ? 'alerta' : ''}">${destacado}</div>` : ''}
+    <dl class="conf-datos">${filas.filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    ${avisos.filter(Boolean).map(([t, fuerte]) => `<p class="conf-aviso ${fuerte ? 'fuerte' : ''}">${t}</p>`).join('')}`;
+  return confirmarHTML(html, boton, false);
+}
+const cambio = (antes, despues) => antes === despues ? `<b>${despues}</b>` : `<s>${antes || 'vacío'}</s> → <b>${despues || 'vacío'}</b>`;
+const destMeses = (n, signo = '+') => `<span class="conf-num" ${n > 3 ? 'data-alerta' : ''}>${signo}${n}</span> ${plural(n, 'mes', 'meses')}`;
+const serviciosTxt = t => { const it = parseServicios(t); return it.length ? `${esc(textoServicios(it))} <small>(${totalPerfiles(it)} ${plural(totalPerfiles(it), 'perfil', 'perfiles')})</small>` : 'sin servicios'; };
+function avisosFecha(meses, vence) {
+  const a = [];
+  if (meses > 3) a.push([`Ojo: son ${meses} meses de una vez. Revisá que sea lo que pagó.`, meses > 6]);
+  if (pISO(vence) && vence < S.hoy) a.push(['Con estos datos queda vencido igual.', true]);
+  return a;
+}
+function confirmarHTML(html, boton = 'Confirmar', peligro = false) {
+  return new Promise(resolver => {
+    const el = $('#confirma');
+    el.innerHTML = `<div class="confirma-caja" role="alertdialog" aria-modal="true">${html}<div class="fila-btn"><button class="btn" data-r="0">Cancelar</button><button class="btn ${peligro ? 'btn-peligro' : 'btn-pri'}" data-r="1">${esc(boton)}</button></div></div>`;
+    el.hidden = false;
+    el.querySelector('[data-r="1"]').focus();
+    el.onclick = e => {
+      const b = e.target.closest('[data-r]');
+      if (!b && e.target !== el) return;
+      el.hidden = true; el.onclick = null;
+      resolver(!!b && b.dataset.r === '1');
+    };
+  });
+}
+const hoja = {
+  abrir(html) {
+    const el = $('#hoja'), p = $('#hojaPanel');
+    p.innerHTML = '<div class="asa"></div>' + html;
+    el.hidden = false; p.scrollTop = 0;
+    requestAnimationFrame(() => el.classList.add('abierta'));
+  },
+  cambiar(html) { $('#hojaPanel').innerHTML = '<div class="asa"></div>' + html; $('#hojaPanel').scrollTop = 0; },
+  cerrar() {
+    const el = $('#hoja');
+    el.classList.remove('abierta');
+    setTimeout(() => { if (!el.classList.contains('abierta')) { el.hidden = true; $('#hojaPanel').innerHTML = ''; } }, 220);
+  },
+  get abierta() { return !$('#hoja').hidden; }
+};
+const cabHoja = (titulo, sub = '', lado = '') => `<div class="hoja-cab">${lado ? `<div>${lado}</div>` : ''}<div class="hoja-tit"><h2>${esc(titulo)}</h2>${sub ? `<p>${sub}</p>` : ''}</div><button class="ic" data-accion="cerrar" aria-label="Cerrar">${ICON.cerrar}</button></div>`;
+
+async function copiar(txt) {
+  try { await navigator.clipboard.writeText(txt); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  toast('Copiado');
+}
+
+/* ================================================================
+   Vista: Vencimientos
+   ================================================================ */
+const GRUPOS = [
+  ['vencidos', 'Vencidos', c => c.dias < 0, 'c-vencido'],
+  ['hoy', 'Hoy', c => c.dias === 0, 'c-hoy'],
+  ['pronto', '1 a 3 días', c => c.dias >= 1 && c.dias <= 3, ''],
+  ['semana', '4 a 7 días', c => c.dias >= 4 && c.dias <= 7, ''],
+  ['despues', 'Más adelante', c => c.dias > 7, '']
+];
+const activos = () => S.clientes.filter(c => { const t = tipo(c); return t !== 'baja' && t !== 'sin'; });
+
+function filaCliente(c, acciones = true) {
+  const t = tipo(c);
+  const meta = [];
+  if (pISO(c.venc)) meta.push(`<span>${t === 'vencido' ? 'Venció' : 'Vence'} ${dmy(c.venc).slice(0, 5)}</span>`);
+  else if (t === 'baja') meta.push('<span>Dado de baja</span>');
+  if (typeof c.monto === 'number' && c.monto > 0) meta.push(`<span>${gs(c.monto)}</span>`);
+  const acc = acciones ? `<span class="fila-acc">${c.tel ? `<a class="ic ic-wa" href="${esc(waLink(c.tel, msgRecordatorio(c)))}" target="_blank" rel="noopener" aria-label="Recordatorio por WhatsApp a ${esc(soloNombre(c.nombre))}">${ICON.wa}</a>` : ''}<button class="ic" data-accion="renovar" data-row="${c.row}" aria-label="Renovar a ${esc(soloNombre(c.nombre))}">${ICON.renovar}</button></span>` : '';
+  return `<li class="fila"><button class="fila-main" data-accion="detalle" data-row="${c.row}">${badge(c)}<span class="fila-txt"><span class="nom">${esc(c.nombre)}</span><span class="sub">${esc(c.servicios || 'Sin servicios cargados')}</span><span class="meta">${meta.join('')}</span></span></button>${acc}</li>`;
+}
+
+function renderVenc() {
+  const act = activos();
+  const cuenta = {};
+  GRUPOS.forEach(([k, , f]) => cuenta[k] = act.filter(f).length);
+  if (!S.filtroVenc) S.filtroVenc = cuenta.hoy ? 'hoy' : cuenta.pronto ? 'pronto' : cuenta.vencidos ? 'vencidos' : 'semana';
+  $('#chipsVenc').innerHTML = GRUPOS.map(([k, lab, , cls]) =>
+    `<button class="chip ${cuenta[k] ? cls : ''}" data-accion="filtro-venc" data-f="${k}" aria-pressed="${S.filtroVenc === k}">${lab} <b>${cuenta[k]}</b></button>`).join('');
+  const g = GRUPOS.find(x => x[0] === S.filtroVenc);
+  let lista = act.filter(g[2]);
+  lista.sort(S.filtroVenc === 'vencidos' ? (a, b) => b.dias - a.dias : (a, b) => a.dias - b.dias || a.nomN.localeCompare(b.nomN));
+  const vacios = {
+    vencidos: ['Nadie vencido', 'Todos los activos están al día.'],
+    hoy: ['Nadie vence hoy', 'Revisá los próximos días en los otros filtros.'],
+    pronto: ['Nada en los próximos 3 días', ''],
+    semana: ['Nada entre 4 y 7 días', ''],
+    despues: ['Sin clientes activos', 'Cargá uno desde Nuevo.']
+  };
+  const lim = S.filtroVenc === 'despues' ? 80 : 400;
+  $('#listaVenc').innerHTML = lista.length
+    ? lista.slice(0, lim).map(c => filaCliente(c)).join('') + (lista.length > lim ? `<li class="vacio">Mostrando ${lim} de ${lista.length}. Buscá en Clientes para ver el resto.</li>` : '')
+    : `<li class="vacio"><strong>${vacios[S.filtroVenc][0]}</strong>${vacios[S.filtroVenc][1]}</li>`;
+  if (S.vista === 'venc') {
+    const partes = [];
+    if (cuenta.vencidos) partes.push(`${cuenta.vencidos} ${plural(cuenta.vencidos, 'vencido', 'vencidos')}`);
+    partes.push(`${cuenta.hoy} ${cuenta.hoy === 1 ? 'vence' : 'vencen'} hoy`);
+    partes.push(`${act.length} activos`);
+    $('#subtitulo').textContent = partes.join(', ');
+  }
+}
+
+/* ================================================================
+   Vista: Clientes
+   ================================================================ */
+function puntaje(c, q, qd) {
+  if (c.nomN.startsWith(q)) return 0;
+  if (c.nomN.includes(' ' + q)) return 1;
+  if (c.nomN.includes(q)) return 2;
+  if (qd.length >= 3 && c.tel.includes(qd)) return 3;
+  if (c.busca.includes(q)) return 4;
+  return -1;
+}
+function buscarClientes(texto, filtro = 'todos') {
+  const q = norm(texto), qd = digitos(texto);
+  let base = S.clientes;
+  if (filtro === 'activos') base = base.filter(c => tipo(c) !== 'baja');
+  if (filtro === 'bajas') base = base.filter(c => tipo(c) === 'baja');
+  if (!q) return base.slice().sort((a, b) => a.nomN.localeCompare(b.nomN));
+  const out = [];
+  for (const c of base) { const p = puntaje(c, q, qd); if (p >= 0) out.push([p, c]); }
+  out.sort((a, b) => a[0] - b[0] || (tipo(a[1]) === 'baja') - (tipo(b[1]) === 'baja') || a[1].nomN.localeCompare(b[1].nomN));
+  return out.map(x => x[1]);
+}
+function renderClientes() {
+  const n = { activos: 0, bajas: 0 };
+  S.clientes.forEach(c => tipo(c) === 'baja' ? n.bajas++ : n.activos++);
+  const pend = S.bajasCargadas ? '' : '…';
+  $('#chipsClientes').innerHTML = [['activos', 'Activos', n.activos], ['todos', 'Todos', S.bajasCargadas ? S.clientes.length : pend], ['bajas', 'Dados de baja', S.bajasCargadas ? n.bajas : pend]]
+    .map(([k, lab, num]) => `<button class="chip" data-accion="filtro-cli" data-f="${k}" aria-pressed="${S.filtroCli === k}">${lab} <b>${num}</b></button>`).join('');
+  const res = buscarClientes(S.q, S.filtroCli);
+  $('#listaClientes').innerHTML = res.length
+    ? res.slice(0, S.limCli).map(c => filaCliente(c, false)).join('') +
+      (res.length > S.limCli ? `<li><button class="btn mas" data-accion="mas-cli">Mostrar ${Math.min(50, res.length - S.limCli)} más de ${res.length - S.limCli}</button></li>` : '')
+    : `<li class="vacio"><strong>Sin resultados</strong>Probá con parte del nombre o los últimos dígitos del teléfono.</li>`;
+  if (!S.bajasCargadas && S.filtroCli !== 'activos') $('#listaClientes').insertAdjacentHTML('beforeend', '<li class="vacio">Todavía se están cargando los dados de baja…</li>');
+  if (S.vista === 'clientes') $('#subtitulo').textContent = S.q ? `${res.length} ${plural(res.length, 'resultado', 'resultados')}` : `${S.clientes.length} en la base`;
+}
+
+/* ================================================================
+   Detalle de cliente
+   ================================================================ */
+function abrirDetalle(row, cambiarSolo = false) {
+  const c = S.porRow.get(Number(row));
+  if (!c) return toast('No encontré ese cliente. Tocá Actualizar.', true);
+  const t = tipo(c);
+  const dato = (k, v) => v && v !== '-' ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : '';
+  const html = cabHoja(c.nombre, esc(estadoTexto(c)), badge(c)) +
+    `<div class="acciones">
+      ${c.tel ? `<a class="btn btn-wa" href="${esc(waLink(c.tel, ''))}" target="_blank" rel="noopener">${ICON.wa}WhatsApp</a>` : ''}
+      ${c.tel && t !== 'baja' ? `<a class="btn" href="${esc(waLink(c.tel, msgRecordatorio(c)))}" target="_blank" rel="noopener">Recordatorio</a>` : ''}
+      <button class="btn btn-pri ancho" data-accion="${t === 'baja' ? 'reactivar' : 'renovar'}" data-row="${c.row}">${ICON.renovar}${t === 'baja' ? 'Reactivar' : 'Renovar'}</button>
+    </div>
+    <dl class="datos">
+      ${dato('Teléfono', c.tel ? `<a href="tel:+${esc(telNormal(c.tel))}" target="_blank">+${esc(telNormal(c.tel))}</a>` : '')}
+      ${dato('Correo', c.correo && c.correo !== '-' ? `<a href="#" data-accion="copiar-txt" data-t="${esc(c.correo)}">${esc(c.correo)}</a>` : '')}
+      ${dato('Servicios', esc(c.servicios))}
+      ${dato('Dispositivos', esc(c.dispositivos))}
+      ${dato('ID', esc(c.id))}
+      ${dato('Perfiles', esc(c.perfil))}
+      ${dato('PIN', esc(c.pin))}
+      ${dato('PINS', esc(c.pins))}
+      ${dato('Activación', pISO(c.fecha) ? dmy(c.fecha) : '')}
+      ${dato('Meses', c.meses !== '' && c.meses != null && t !== 'baja' ? esc(c.meses) : '')}
+      ${esperoDias(c) ? dato('Esperó', esperoDias(c) + ' ' + plural(esperoDias(c), 'día', 'días')) : dato('Monto', typeof c.monto === 'number' && c.monto !== 0 ? gs(c.monto) : '')}
+    </dl>
+    <div class="secundarias">
+      <button class="link" data-accion="ubicar" data-row="${c.row}">Ver en qué cuentas está</button>
+      <div id="ubicacion" style="width:100%"></div>
+      <button class="link" data-accion="asignar-cliente" data-row="${c.row}">Asignar a un lugar libre</button>
+      <button class="link" data-accion="editar" data-row="${c.row}">Editar datos</button>
+      ${t !== 'baja' && puede('darDeBaja') ? `<button class="link peligro" data-accion="baja" data-row="${c.row}">Dar de baja</button>` : ''}
+    </div>`;
+  cambiarSolo ? hoja.cambiar(html) : hoja.abrir(html);
+}
+
+async function ubicar(row) {
+  const c = S.porRow.get(Number(row));
+  const box = $('#ubicacion');
+  box.innerHTML = '<p class="cuenta-meta">Buscando en las hojas de servicio…</p>';
+  try {
+    const res = await api('ubicarCliente', c.nombre);
+    box.innerHTML = res.length
+      ? `<ul class="ubic">${res.map(u => `<li><button data-accion="ir-lugar" data-hoja="${esc(u.hoja)}" data-row="${u.row}"><span><b>${esc(u.hoja)}</b><br><small>${esc([u.cuenta, u.plan].filter(Boolean).join(', ') || 'Fila ' + u.row)}${u.inactiva ? ' (cuenta para reactivar)' : ''}</small></span><span class="lugar-acc">Abrir</span></button></li>`).join('')}</ul>`
+      : '<p class="cuenta-meta">No aparece en ninguna cuenta con este nombre exacto.</p>';
+  } catch (e) { box.innerHTML = ''; toast(msgError(e), true); }
+}
+
+function actualizarCliente(enc) {
+  const c = dec(enc);
+  const i = S.clientes.findIndex(x => x.row === c.row);
+  if (i >= 0) S.clientes[i] = c; else S.clientes.push(c);
+  indexar();
+  S.cacheServ = {}; S.servViejo = {};
+  renderTodo();
+  return c;
+}
+
+/* ================================================================
+   Renovar
+   ================================================================ */
+function abrirRenovar(row) {
+  const c = S.porRow.get(Number(row));
+  if (!c) return;
+  const t = tipo(c);
+  const puedeSumar = t !== 'baja' && pISO(c.fecha) && typeof c.meses === 'number';
+  const monto = typeof c.monto === 'number' && c.monto > 0 ? miles(c.monto) : '';
+  const aviso = t === 'vencido' ? `<span class="ayuda">Venció hace ${-c.dias} ${plural(-c.dias, 'día', 'días')}: si seguís desde el vencimiento, esos días cuentan.</span>` : '';
+  const html = cabHoja(t === 'baja' ? 'Reactivar' : 'Renovar', esc(c.nombre)) +
+    `<form class="form" id="fRenovar" data-row="${c.row}">
+      <div class="tarjeta">
+        <div class="campo"><span class="etq">Meses que paga</span>
+          <div class="meses">${[1, 2, 3, 6, 12].map(m => `<label><input type="radio" name="meses" value="${m}" ${m === 1 ? 'checked' : ''}><span>${m}</span></label>`).join('')}</div>
+        </div>
+        ${puedeSumar ? `<div class="campo"><span class="etq">Desde cuándo</span><div class="modos">
+          <label class="modo"><input type="radio" name="modo" value="sumar" checked><span><b>Seguir desde el vencimiento</b><small>Suma meses a los ${c.meses} que ya tiene. La activación queda en ${dmy(c.fecha)}.</small></span></label>
+          <label class="modo"><input type="radio" name="modo" value="desde"><span><b>Empezar de nuevo</b><small>Nueva fecha de activación y meses desde cero.</small></span></label>
+        </div>${aviso}</div>` : '<input type="hidden" name="modo" value="desde">'}
+        <div class="campo" id="rDesdeCampo" ${puedeSumar ? 'hidden' : ''}><label for="rDesde">Nueva activación</label><input id="rDesde" name="desde" type="date" value="${S.hoy}"></div>
+        <div class="campo"><label for="rMonto">Monto (Gs.)</label><input id="rMonto" name="monto" inputmode="numeric" autocomplete="off" value="${monto}" data-miles></div>
+      </div>
+      <div class="previa" id="rPrevia"></div>
+      <button class="btn btn-pri btn-bloque" type="submit">${t === 'baja' ? 'Reactivar' : 'Guardar renovación'}</button>
+    </form>`;
+  hoja.abrir(html);
+  previaRenovar();
+}
+function venceRenovar(f, c) {
+  const n = Number(f.meses.value);
+  if (f.modo.value === 'sumar') return sumarMeses(c.fecha, c.meses + n);
+  return pISO(f.desde.value) ? sumarMeses(f.desde.value, n) : '';
+}
+function previaRenovar() {
+  const f = $('#fRenovar'); if (!f) return;
+  const c = S.porRow.get(Number(f.dataset.row));
+  $('#rDesdeCampo').hidden = f.modo.value === 'sumar';
+  const v = venceRenovar(f, c);
+  $('#rPrevia').innerHTML = v ? `Nuevo vencimiento: <b class="num">${dmy(v)}</b>` : 'Elegí la fecha de activación.';
+}
+async function guardarRenovar(f) {
+  const c = S.porRow.get(Number(f.dataset.row));
+  const modo = f.modo.value, meses = Number(f.meses.value), desde = f.desde.value, monto = digitos(f.monto.value);
+  if (modo === 'desde' && !pISO(desde)) return toast('Elegí la fecha de activación.', true);
+  const vence = venceRenovar(f, c);
+  const baja = tipo(c) === 'baja';
+  const antesMonto = typeof c.monto === 'number' ? gs(c.monto) : '';
+  const ahoraMonto = monto ? gs(Number(monto)) : antesMonto;
+  const avisos = avisosFecha(meses, vence);
+  if (modo === 'desde' && !baja) avisos.push(['Empieza de nuevo: la activación pasa a ' + dmy(desde) + ' y los meses vuelven a ' + meses + '.', false]);
+  const ok = await confirmarResumen(baja ? '¿Reactivar a este cliente?' : '¿Guardar la renovación?', destMeses(meses, baja || modo === 'desde' ? '' : '+'), [
+    ['Cliente', `<b>${esc(c.nombre)}</b>`],
+    ['Servicios', serviciosTxt(c.servicios)],
+    ['Vencimiento', cambio(baja ? 'dado de baja' : dmy(c.venc), dmy(vence))],
+    modo === 'sumar' && ['Meses', cambio(String(c.meses), String(c.meses + meses))],
+    ['Monto', cambio(antesMonto, ahoraMonto)]
+  ], avisos, baja ? 'Reactivar' : 'Renovar');
+  if (!ok) return;
+  const b = f.querySelector('[type=submit]'), txt = b.textContent; b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const nuevo = actualizarCliente(await api('renovarCliente', c.row, c.nombre, modo, meses, desde, monto, esperado(c)));
+    hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Renovado hasta el ${dmy(nuevo.venc)}</h2><p>${esc(nuevo.nombre)}</p>
+      <div class="pila">${nuevo.tel ? `<a class="btn btn-wa" href="${esc(waLink(nuevo.tel, llenar(S.msgs.renovado, nuevo)))}" target="_blank" rel="noopener">${ICON.wa}Enviar confirmación</a>` : ''}
+      <button class="btn" data-accion="detalle" data-row="${nuevo.row}">Ver cliente</button>
+      <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = txt; }
+}
+
+/* ================================================================
+   Formulario de cliente (nuevo y editar)
+   ================================================================ */
+function topValores(campo, n, partir = false) {
+  const cnt = new Map();
+  for (const c of S.clientes) {
+    const vals = partir ? String(c[campo] || '').split(',') : [c[campo]];
+    for (let v of vals) { v = String(v || '').trim(); if (v && v !== '-' && v.toUpperCase() !== 'X') cnt.set(v, (cnt.get(v) || 0) + 1); }
+  }
+  return [...cnt.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
+}
+const AYUDA_NOMBRE = 'El nombre tiene que ser único: las hojas de servicio lo buscan tal cual.';
+const AYUDA_NOMBRE_NUEVO = 'El emoji se pone solo según el primer servicio. Tocá otro para cambiarlo.';
+// modo: 'nuevo' | 'editar' | 'reactivar'
+/**
+ * Todos los servicios: los de la leyenda de RegistrodeDatos (con su emoji) más
+ * los que aparecen en la base sin estar en la leyenda. Cada uno trae sus variantes
+ * de uso real (Netflix, Netflix-Premium, Netflix-Privado...), escritas como las usás más.
+ */
+function catalogoServicios() {
+  if (S._catalogo) return S._catalogo;
+  const formas = new Map();   // variante normalizada -> {textos, total, activos}
+  for (const c of S.clientes) {
+    const activo = tipo(c) !== 'baja';
+    for (const it of parseServicios(c.servicios)) {
+      const kv = norm(it.n).replace(/ /g, '');
+      if (!kv) continue;
+      let f = formas.get(kv);
+      if (!f) formas.set(kv, f = { textos: new Map(), total: 0, activos: 0 });
+      f.textos.set(it.n, (f.textos.get(it.n) || 0) + 1);
+      f.total++; if (activo) f.activos++;
+    }
+  }
+  const grupoDe = texto => {
+    const k = claveServ(texto); let mejor = null;
+    S.leyenda.forEach(([sv], i) => {
+      const kk = claveServ(sv);
+      if (kk && (k === kk || k.startsWith(kk) || kk.startsWith(k)) && (!mejor || kk.length > mejor.len)) mejor = { i, len: kk.length };
+    });
+    return mejor ? 'L' + mejor.i : 'X' + k;
+  };
+  const grupos = new Map();
+  S.leyenda.forEach(([sv, em], i) => grupos.set('L' + i, { nombre: sv.trim(), emoji: em, vars: [], uso: 0, total: 0 }));
+  for (const f of formas.values()) {
+    const texto = [...f.textos.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const g = grupoDe(texto);
+    if (!grupos.has(g)) grupos.set(g, { nombre: texto.split('-')[0].trim(), emoji: '', vars: [], uso: 0, total: 0 });
+    const gr = grupos.get(g);
+    gr.vars.push({ texto, total: f.total, activos: f.activos });
+    gr.uso += f.activos; gr.total += f.total;
+  }
+  const lista = [];
+  for (const [id, g] of grupos) {
+    if (id[0] === 'X' && g.total < 2) continue;              // descarta errores sueltos de tipeo
+    g.vars.sort((a, b) => b.activos - a.activos || b.total - a.total);
+    let vars = g.vars.filter(v => v.activos >= 3 || v.total >= 20).map(v => v.texto);
+    if (!vars.length) vars = [g.vars.length ? g.vars[0].texto : g.nombre];
+    lista.push({ nombre: g.nombre, emoji: g.emoji, vars, uso: g.uso, total: g.total });
+  }
+  lista.sort((a, b) => b.uso - a.uso || b.total - a.total || a.nombre.localeCompare(b.nombre));
+  return (S._catalogo = lista);
+}
+
+function camposCliente(c = {}, modo = 'editar') {
+  const nuevo = modo === 'nuevo', react = modo === 'reactivar';
+  const v = k => esc(c[k] == null || c[k] === '-' ? '' : c[k]);
+  const baja = modo === 'editar' && tipo(c) === 'baja';
+  const oblig = nuevo || react ? '<span class="req" aria-label="obligatorio">*</span>' : '';
+  const ids = topValores('id', 15), disp = topValores('dispositivos', 12), servs = catalogoServicios();
+  return `
+  <div class="tarjeta">
+    <div class="campo"><label for="cNombre">Nombre y apellido${oblig}</label>
+      <input id="cNombre" name="nombre" value="${v('nombre')}" autocomplete="off" required>
+      ${S.leyenda.length ? `<div class="sugs" aria-label="Agregar emoji del servicio">${S.leyenda.map(([sv, em]) => `<button type="button" class="sug" data-accion="emoji" data-e="${esc(em)}" title="${esc(sv)}">${esc(em)} ${esc(sv)}</button>`).join('')}</div>` : ''}
+      <span class="ayuda" id="cNombreAyuda">${nuevo ? AYUDA_NOMBRE_NUEVO : AYUDA_NOMBRE}</span>
+    </div>
+    <div class="campo"><label for="cTel">Teléfono${oblig}</label>
+      <input id="cTel" name="telefono" type="tel" inputmode="tel" value="${v('tel')}" placeholder="0981 123456" required></div>
+    ${nuevo ? '<div id="cExiste"></div>' : ''}
+  </div>
+  <div class="tarjeta">
+    <div class="campo"><label for="cServ">Servicios${oblig}</label>
+      <input id="cServ" name="servicios" value="${v('servicios')}" autocomplete="off" placeholder="Netflix-Premium, Disney">
+      <div class="sugs dosfilas" aria-label="Agregar servicio">${servs.map((g, i) => `<button type="button" class="sug" data-accion="serv-grupo" data-g="${i}">${g.emoji ? esc(g.emoji) + ' ' : ''}${esc(g.nombre)}</button>`).join('')}</div>
+      <div id="cServVar"></div>
+      <div id="cServEditor"></div></div>
+    <div class="campo"><label for="cId">ID${oblig}</label><input id="cId" name="idc" list="lIds" value="${v('id')}" autocomplete="off"></div>
+    <div class="campo"><label for="cDisp">Dispositivos</label><input id="cDisp" name="dispositivos" list="lDisp" value="${v('dispositivos')}" autocomplete="off"><span class="ayuda" id="cDispAyuda"></span></div>
+    <div class="dos">
+      <div class="campo"><label for="cPin">PIN</label><input id="cPin" name="pin" inputmode="numeric" value="${v('pin')}" autocomplete="off"></div>
+      <div class="campo"><label for="cPins">PINS</label><input id="cPins" name="pins" value="${v('pins')}" autocomplete="off"></div>
+    </div>
+    <div class="campo"><label for="cCorreo">Correo del cliente</label><input id="cCorreo" name="correo" type="email" inputmode="email" value="${v('correo')}" autocomplete="off"><span class="ayuda" id="cCorreoAyuda"></span></div>
+    <datalist id="lIds">${ids.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+    <datalist id="lDisp">${disp.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
+  </div>
+  <div class="tarjeta">
+    <div class="dos">
+      <div class="campo"><label for="cFecha">Activación${oblig}</label><input id="cFecha" name="fecha" type="date" value="${react ? S.hoy : pISO(c.fecha) ? c.fecha : (nuevo ? S.hoy : '')}" ${baja ? 'disabled' : ''}></div>
+      <div class="campo"><label for="cMeses">Meses${oblig}</label><input id="cMeses" name="meses" inputmode="numeric" value="${react ? '1' : c.meses !== undefined && c.meses !== '' ? v('meses') : '1'}"></div>
+    </div>
+    ${modo === 'editar' ? '<span class="ayuda">El vencimiento es la activación más los meses. Para cobrar un mes nuevo usá Renovar.</span>' : ''}
+    <div class="campo"><label for="cMonto">Monto (Gs.)${oblig}</label><input id="cMonto" name="monto" inputmode="numeric" value="${typeof c.monto === 'number' && c.monto > 0 ? miles(c.monto) : ''}" autocomplete="off" data-miles></div>
+    ${nuevo || react ? '<div class="previa" id="cPrevia"></div>' : !baja && !puede('darDeBaja') ? '' : `<label class="check"><input type="checkbox" name="baja" ${baja ? 'checked' : ''}> Dado de baja</label>`}
+  </div>`;
+}
+/* Reglas de Dispositivos y Correo según los servicios (se editan en CONFIG de Code.gs) */
+const claveRegla = s => norm(String(s || '').replace(/-\d+$/, '')).replace(/ /g, '');
+const aplicaRegla = (lista, sv) => { const k = claveRegla(sv); return (lista || []).some(r => k.startsWith(claveRegla(r))); };
+function reglasServicios(txt) {
+  const it = parseServicios(txt).map(i => i.n);
+  return {
+    hay: it.length > 0,
+    sinDisp: it.length > 0 && it.every(n => aplicaRegla(S.reglas.sinDispositivo, n)),
+    conCorreo: [...new Set(it.filter(n => aplicaRegla(S.reglas.conCorreo, n)))]
+  };
+}
+const conReglas = f => f && (f.id === 'fNuevo' || f.id === 'fReactivar');
+function aplicarReglas(f) {
+  if (!conReglas(f)) return;
+  const r = reglasServicios(f.servicios.value), disp = f.dispositivos;
+  if (r.sinDisp) {
+    if (!disp.readOnly) f.dataset.dispAntes = disp.value === '-' ? '' : disp.value;
+    disp.value = '-'; disp.readOnly = true;
+    f.querySelector('#cDispAyuda').textContent = 'Estos servicios no llevan dispositivo, queda "-".';
+  } else {
+    if (disp.readOnly) { disp.readOnly = false; disp.value = f.dataset.dispAntes || ''; }
+    f.querySelector('#cDispAyuda').textContent = r.hay ? 'Obligatorio para estos servicios.' : '';
+  }
+  f.querySelector('#cCorreoAyuda').textContent = r.conCorreo.length ? 'Obligatorio para ' + r.conCorreo.join(', ') + '.' : '';
+}
+// Revisa los obligatorios, marca en rojo lo que falta y devuelve los datos (o null)
+function validarForm(f) {
+  const d = datosForm(f), r = reglasServicios(d.servicios), falta = [];
+  f.querySelectorAll('.campo.falta').forEach(x => x.classList.remove('falta'));
+  const marcar = (campo, nombre) => { falta.push(nombre); const el = f[campo] && f[campo].closest('.campo'); if (el) el.classList.add('falta'); };
+  if (!d.nombre) marcar('nombre', 'nombre');
+  if (digitos(d.telefono).length < 8) marcar('telefono', 'teléfono');
+  if (!r.hay) marcar('servicios', 'servicios');
+  if (!d.id) marcar('idc', 'ID');
+  if (!pISO(d.fecha)) marcar('fecha', 'activación');
+  if (!(Number(d.meses) >= 1)) marcar('meses', 'meses');
+  if (!(Number(d.monto) > 0)) marcar('monto', 'monto');
+  if (r.hay && !r.sinDisp && (!d.dispositivos || d.dispositivos === '-')) marcar('dispositivos', 'dispositivos');
+  if (r.conCorreo.length && !/^\S+@\S+\.\S+$/.test(d.correo)) marcar('correo', 'correo');
+  if (!falta.length) return d;
+  toast('Falta completar: ' + falta.join(', ') + '.', true);
+  const primero = f.querySelector('.campo.falta input');
+  if (primero) primero.focus();
+  return null;
+}
+// "¿Es alguno de estos?": copia los datos personales de ese cliente al formulario nuevo
+function usarDatos(f, row) {
+  const c = S.porRow.get(Number(row));
+  if (!c) return;
+  const v = x => (x == null || x === '-' ? '' : String(x));
+  f.nombre.value = sinEmojis(c.nombre);
+  f.dataset.auto = ''; f.dataset.finAuto = '';
+  f.telefono.value = telNormal(c.tel);
+  f.idc.value = v(c.id);
+  f.pin.value = v(c.pin); f.pin.dataset.tocado = '1';
+  f.pins.value = v(c.pins);
+  f.correo.value = v(c.correo);
+  f.dataset.copiadoDe = c.row;
+  f.querySelectorAll('.campo.falta').forEach(x => x.classList.remove('falta'));
+  if (parseServicios(f.servicios.value).length) aplicarEmoji(f); else { revisarNombre(f, -1); revisarExistentes(f); }
+  toast(tipo(c) === 'baja' ? 'Datos copiados. Si vuelve con el mismo servicio de antes, conviene Reactivar su fila.' : 'Datos copiados de ' + c.nombre);
+}
+
+function renderServicios(f) {
+  const cont = f.querySelector('#cServEditor');
+  if (!cont) return;
+  aplicarReglas(f);
+  const items = parseServicios(f.servicios.value);
+  const total = totalPerfiles(items);
+  cont.innerHTML = (items.length
+      ? `<div class="pservs">${items.map((i, k) => `<span class="pserv"><b>${esc(i.n)}</b>
+          <button type="button" data-accion="serv-menos" data-k="${k}" aria-label="Menos perfiles de ${esc(i.n)}">−</button><i>${i.c}</i>
+          <button type="button" data-accion="serv-mas" data-k="${k}" aria-label="Más perfiles de ${esc(i.n)}">+</button>
+          <button type="button" class="quitar" data-accion="serv-quitar" data-k="${k}" aria-label="Quitar ${esc(i.n)}">×</button></span>`).join('')}</div>` : '') +
+    `<span class="ayuda">${items.length ? `${total} ${plural(total, 'perfil', 'perfiles')} en total${S.perfilAuto ? ', lo calcula la fórmula de la columna Perfil' : ''}.` : 'Elegí los servicios y la cantidad de perfiles de cada uno.'}</span>`;
+}
+function agregarServicio(f, texto) {
+  const items = parseServicios(f.servicios.value);
+  const ya = items.find(i => norm(i.n) === norm(texto));
+  if (ya) ya.c++; else items.push({ n: texto, c: 1 });
+  f.servicios.value = textoServicios(items);
+  renderServicios(f);
+  if (emojiAuto(f)) aplicarEmoji(f);
+}
+function cambiarServicio(f, k, delta) {
+  const items = parseServicios(f.servicios.value);
+  if (!items[k]) return;
+  if (delta === 0) items.splice(k, 1);
+  else items[k].c = Math.max(1, items[k].c + delta);
+  f.servicios.value = textoServicios(items);
+  renderServicios(f);
+  if (emojiAuto(f)) aplicarEmoji(f);
+}
+
+function datosForm(f) {
+  const d = {};
+  ['nombre', 'telefono', 'servicios', 'dispositivos', 'pin', 'pins', 'correo', 'meses'].forEach(k => d[k] = f[k].value.trim());
+  d.id = f.idc.value.trim();
+  d.monto = digitos(f.monto.value);
+  if (!S.perfilAuto) d.perfil = String(totalPerfiles(parseServicios(d.servicios)) || 1);
+  d.telefono = telNormal(d.telefono);
+  if (f.baja && f.baja.checked) d.fecha = 'X';
+  else d.fecha = f.fecha.value;
+  return d;
+}
+function revisarNombre(f, filaPropia) {
+  const nombre = f.nombre.value.trim();
+  const ayuda = f.querySelector('#cNombreAyuda');
+  const exacto = S.porNombre.get(claveNombre(nombre));
+  const base = norm(soloNombre(nombre));
+  if (nombre && exacto && exacto.row !== filaPropia) {
+    ayuda.className = 'error';
+    ayuda.textContent = `Ya existe "${exacto.nombre}". Agregale un emoji distinto o cambiá el nombre.`;
+    return false;
+  }
+  const parecidos = base && f.id !== 'fNuevo' ? S.clientes.filter(c => c.nomN === base && c.row !== filaPropia).slice(0, 4) : [];
+  ayuda.className = 'ayuda';
+  ayuda.textContent = parecidos.length
+    ? 'Nombres parecidos en la base: ' + parecidos.map(c => `${c.nombre} (${c.servicios || 'sin servicio'})`).join(', ')
+    : (f.id === 'fNuevo' ? AYUDA_NOMBRE_NUEVO : AYUDA_NOMBRE);
+  return true;
+}
+
+function renderNuevo(exito) {
+  if (exito) {
+    const c = exito;
+    $('#nuevoCuerpo').innerHTML = `<div class="tarjeta" style="background:var(--surface);border-radius:var(--r-l);padding:20px 16px"><div class="exito"><div class="marca">${ICON.ok}</div><h2>Cliente guardado</h2>
+      <p>${esc(c.nombre)}${pISO(c.venc) ? `, vence el ${dmy(c.venc)}` : ''}</p>
+      <div class="pila"><button class="btn btn-pri" data-accion="asignar-cliente" data-row="${c.row}">Asignar a un lugar libre</button>
+      <button class="btn" data-accion="detalle" data-row="${c.row}">Ver cliente</button>
+      <button class="btn" data-accion="nuevo-otro">Cargar otro</button></div></div></div>`;
+    return;
+  }
+  $('#nuevoCuerpo').innerHTML = `<form class="form" id="fNuevo" novalidate>${camposCliente({}, 'nuevo')}
+    <button class="btn btn-pri btn-bloque" type="submit">Guardar cliente</button></form>`;
+  renderServicios($('#fNuevo'));
+  previaForm($('#fNuevo'));
+}
+function previaForm(f) {
+  const box = f && f.querySelector('#cPrevia'); if (!box) return;
+  const m = Number(f.meses.value) || 0;
+  box.innerHTML = pISO(f.fecha.value) && m > 0 ? `Vence el <b class="num">${dmy(sumarMeses(f.fecha.value, m))}</b>` : 'Completá activación y meses para ver el vencimiento.';
+}
+
+// Mientras cargás un cliente nuevo: ¿ya existe por teléfono o por nombre?
+function revisarExistentes(f) {
+  const box = f && f.querySelector('#cExiste'); if (!box) return;
+  const t9 = telNormal(f.telefono.value).slice(-9);
+  if (f.dataset.copiadoDe) {
+    const c0 = S.porRow.get(Number(f.dataset.copiadoDe));
+    if (c0 && telNormal(c0.tel).slice(-9) === t9) {
+      box.innerHTML = `<div class="existe"><p style="margin:0">Datos copiados de <b>${esc(c0.nombre)}</b>. <button type="button" class="link" style="padding:4px 0" data-accion="ver-coincidencias">Ver coincidencias</button></p></div>`;
+      return;
+    }
+    delete f.dataset.copiadoDe;
+  }
+  const q = norm(soloNombre(f.nombre.value));
+  const res = [], vistos = new Set();
+  const sumar = (c, por) => { if (!vistos.has(c.row)) { vistos.add(c.row); res.push([c, por]); } };
+  // 1) mismo teléfono (el dato más seguro)
+  if (t9.length >= 8) S.clientes.forEach(c => { if (telNormal(c.tel).slice(-9) === t9) sumar(c, 'tel'); });
+  // 2) por nombre mientras escribís: exacto, empieza igual, o alguna palabra empieza igual
+  let masNombres = 0;
+  if (q.length >= 3) {
+    const cand = [];
+    S.clientes.forEach(c => {
+      if (vistos.has(c.row)) return;
+      const p = c.nomN === q ? 0 : c.nomN.startsWith(q) ? 1 : c.nomN.includes(' ' + q) ? 2 : -1;
+      if (p >= 0) cand.push([p, c]);
+    });
+    cand.sort((x, y) => x[0] - y[0] || x[1].nomN.localeCompare(y[1].nomN));
+    const cupo = Math.max(0, 5 - res.length);
+    cand.slice(0, cupo).forEach(([, c]) => sumar(c, 'nombre'));
+    masNombres = Math.max(0, cand.length - cupo);
+  }
+  const buscando = !S.bajasCargadas && (t9.length >= 8 || q.length >= 3);
+  if (!res.length) { box.innerHTML = buscando ? '<span class="ayuda">Buscando también entre los dados de baja…</span>' : ''; return; }
+  const soloTel = res.every(([, por]) => por === 'tel');
+  const titulo = soloTel ? (res.length === 1 ? 'Este número ya está en la base' : `Este número ya está en ${res.length} filas`) : '¿Es alguno de estos?';
+  box.innerHTML = `<div class="existe"><p><b>${titulo}</b>${buscando ? ' (faltan los dados de baja)' : ''}<br><span class="ex-ayuda">Tocá un nombre para copiar sus datos.</span></p><ul>` +
+    res.map(([c, por]) => {
+      const baja = tipo(c) === 'baja';
+      const extra = !soloTel && por === 'tel' ? ', mismo teléfono' : '';
+      return `<li><button type="button" class="ex-usar" data-accion="usar-datos" data-row="${c.row}" aria-label="Copiar los datos de ${esc(c.nombre)}">${badge(c)}<span class="ex-txt"><b>${esc(c.nombre)}</b><small>${esc((c.servicios || 'sin servicios') + extra)}</small></span></button>
+        <button type="button" class="btn btn-sm ${baja ? 'btn-pri' : ''}" data-accion="${baja ? 'reactivar' : 'detalle'}" data-row="${c.row}" data-origen="nuevo">${baja ? 'Reactivar' : 'Ver'}</button></li>`;
+    }).join('') + '</ul>' +
+    (masNombres ? `<p style="margin:8px 2px 0">Y ${masNombres} ${plural(masNombres, 'más', 'más')} con ese nombre. Seguí escribiendo el apellido para achicar la lista.</p>` : '') + '</div>';
+}
+
+function abrirReactivar(row, origen = '') {
+  const c = S.porRow.get(Number(row));
+  if (!c) return;
+  hoja.abrir(cabHoja('Reactivar', esc(c.nombre)) +
+    `<p class="ayuda" style="margin:-6px 2px 12px">Se actualiza su misma fila en BasedeDatos. Revisá que sus datos sigan igual y elegí desde cuándo arranca.</p>
+    <form class="form" id="fReactivar" data-row="${c.row}" data-origen="${esc(origen)}" novalidate>${camposCliente(c, 'reactivar')}
+    <button class="btn btn-pri btn-bloque" type="submit">Reactivar</button></form>`);
+  const f = $('#fReactivar');
+  renderServicios(f);
+  previaForm(f);
+}
+async function guardarReactivar(f) {
+  const c = S.porRow.get(Number(f.dataset.row));
+  if (!revisarNombre(f, c.row)) return toast('Ese nombre ya existe.', true);
+  const d = validarForm(f);
+  if (!d) return;
+  const n = Number(d.meses), vence = sumarMeses(d.fecha, n);
+  const ok = await confirmarResumen('¿Reactivar a este cliente?', destMeses(n, ''), [
+    ['Cliente', `<b>${esc(d.nombre)}</b>`],
+    ['Servicios', serviciosTxt(d.servicios)],
+    ['Vencimiento', cambio('dado de baja', dmy(vence))],
+    ['Activación', dmy(d.fecha)],
+    ...cambiosCliente(c, d).filter(([k]) => k !== 'Servicios' && k !== 'Nombre')
+  ], [...avisosFecha(n, vence), d.nombre !== c.nombre && ['El nombre nuevo también se cambia en las hojas de servicio.', false]], 'Reactivar');
+  if (!ok) return;
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const r = await api('guardarCliente', c.row, c.nombre, d, esperado(c));
+    const nuevo = actualizarCliente(r.cliente);
+    if (f.dataset.origen === 'nuevo') { $('#nuevoCuerpo').innerHTML = ''; renderNuevo(); }
+    if (r.renombrados) toast(`Nombre actualizado también en ${r.renombrados} ${plural(r.renombrados, 'lugar', 'lugares')}.`);
+    hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Reactivado hasta el ${dmy(nuevo.venc)}</h2><p>${esc(nuevo.nombre)}</p>
+      <div class="pila">${nuevo.tel ? `<a class="btn btn-wa" href="${esc(waLink(nuevo.tel, llenar(S.msgs.renovado, nuevo)))}" target="_blank" rel="noopener">${ICON.wa}Enviar confirmación</a>` : ''}
+      <button class="btn btn-pri" data-accion="asignar-cliente" data-row="${nuevo.row}">Asignar a un lugar libre</button>
+      <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Reactivar'; }
+}
+async function guardarNuevo(f) {
+  if (emojiAuto(f)) aplicarEmoji(f);
+  if (!revisarNombre(f, -1)) return toast('Ese nombre ya existe.', true);
+  const d = validarForm(f);
+  if (!d) return;
+  const n = Number(d.meses);
+  const vence = sumarMeses(d.fecha, n);
+  const ok = await confirmarResumen('¿Guardar este cliente nuevo?', destMeses(n, ''), [
+    ['Cliente', `<b>${esc(d.nombre)}</b>`],
+    ['Teléfono', '+' + esc(d.telefono)],
+    ['Servicios', serviciosTxt(d.servicios)],
+    ['ID', esc(d.id)],
+    d.dispositivos && d.dispositivos !== '-' && ['Dispositivos', esc(d.dispositivos)],
+    d.correo && ['Correo', esc(d.correo)],
+    ['Activación', dmy(d.fecha)],
+    ['Vence', `<b>${dmy(vence)}</b>`],
+    ['Monto', d.monto ? gs(Number(d.monto)) : 'sin monto']
+  ], [...avisosFecha(n, vence), !d.servicios && ['No tiene servicios cargados.', false], !d.monto && ['No tiene monto cargado.', false]], 'Guardar');
+  if (!ok) return;
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const c = actualizarCliente(await api('nuevoCliente', d));
+    renderNuevo(c);
+    toast('Cliente guardado');
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar cliente'; }
+}
+
+// Qué cambia entre el cliente guardado y el formulario
+function cambiosCliente(c, d) {
+  const limpio = v => { v = String(v == null ? '' : v).trim(); return v === '-' ? '' : v; };
+  const campos = [
+    ['Nombre', c.nombre, d.nombre],
+    ['Teléfono', telNormal(c.tel), d.telefono],
+    ['Servicios', c.servicios, d.servicios],
+    ['ID', c.id, d.id],
+    ['Dispositivos', c.dispositivos, d.dispositivos],
+    ['PIN', c.pin, d.pin],
+    ['PINS', c.pins, d.pins],
+    ['Correo', c.correo, d.correo],
+    ['Monto', typeof c.monto === 'number' ? String(c.monto) : limpio(c.monto), d.monto === undefined ? (typeof c.monto === 'number' ? String(c.monto) : limpio(c.monto)) : d.monto]
+  ];
+  const out = [];
+  for (const [k, a, b] of campos) {
+    if (limpio(a) === limpio(b)) continue;
+    const fmt = v => k === 'Monto' && limpio(v) ? gs(Number(v)) : esc(limpio(v));
+    out.push([k, cambio(fmt(a), fmt(b))]);
+  }
+  return out;
+}
+
+function abrirEditar(row) {
+  const c = S.porRow.get(Number(row));
+  hoja.abrir(cabHoja('Editar datos', esc(c.nombre)) + `<form class="form" id="fEditar" data-row="${c.row}" novalidate>${camposCliente(c, 'editar')}
+    <button class="btn btn-pri btn-bloque" type="submit">Guardar cambios</button></form>`);
+  renderServicios($('#fEditar'));
+}
+async function guardarEditar(f) {
+  const c = S.porRow.get(Number(f.dataset.row));
+  if (!revisarNombre(f, c.row)) return toast('Ese nombre ya existe.', true);
+  const d = datosForm(f);
+  if (!d.nombre) return toast('El nombre no puede quedar vacío.', true);
+  if (d.fecha !== 'X' && !pISO(d.fecha)) return toast('Poné la fecha de activación.', true);
+  if (!d.monto) delete d.monto;
+  const filas = cambiosCliente(c, d);
+  const mesesAntes = typeof c.meses === 'number' ? c.meses : Number(c.meses) || 0, mesesDespues = Number(d.meses) || 0;
+  const bajaAntes = tipo(c) === 'baja', bajaDespues = d.fecha === 'X';
+  const venceAntes = bajaAntes ? 'dado de baja' : dmy(c.venc);
+  const venceDespues = bajaDespues ? 'dado de baja' : dmy(sumarMeses(d.fecha, mesesDespues));
+  const avisos = [];
+  if (mesesAntes !== mesesDespues) filas.push(['Meses', cambio(String(mesesAntes), String(mesesDespues))]);
+  if (!bajaDespues && d.fecha !== c.fecha) filas.push(['Activación', cambio(pISO(c.fecha) ? dmy(c.fecha) : 'sin fecha', dmy(d.fecha))]);
+  if (venceAntes !== venceDespues) filas.push(['Vencimiento', cambio(venceAntes, venceDespues)]);
+  if (!filas.length) return toast('No cambiaste nada.');
+  const dif = mesesDespues - mesesAntes;
+  if (!bajaDespues && Math.abs(dif) > 3) avisos.push([`Ojo: los meses ${dif > 0 ? 'suben' : 'bajan'} ${Math.abs(dif)} de golpe. Para cobrar un mes nuevo usá Renovar.`, true]);
+  if (!bajaDespues && pISO(d.fecha) && sumarMeses(d.fecha, mesesDespues) < S.hoy && !bajaAntes) avisos.push(['Con estos datos queda vencido.', true]);
+  if (bajaDespues && !bajaAntes) avisos.push(['Queda dado de baja (X en la fecha).', true]);
+  if (d.nombre !== c.nombre) avisos.push(['El nombre nuevo también se cambia en las hojas de servicio.', false]);
+  const ok = await confirmarResumen('¿Guardar estos cambios?', '', [['Cliente', `<b>${esc(c.nombre)}</b>`], ...filas], avisos, 'Guardar cambios');
+  if (!ok) return;
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const r = await api('guardarCliente', c.row, c.nombre, d, esperado(c));
+    const nuevo = actualizarCliente(r.cliente);
+    toast(r.renombrados ? `Cambios guardados. Nombre actualizado en ${r.renombrados} ${plural(r.renombrados, 'lugar', 'lugares')}.` : 'Cambios guardados');
+    abrirDetalle(nuevo.row, true);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar cambios'; }
+}
+function abrirBaja(row) {
+  const c = S.porRow.get(Number(row));
+  if (!c) return;
+  const espera = typeof c.dias === 'number' && c.dias < 0 ? -c.dias : 0;
+  S._bajaLugares = [];
+  hoja.abrir(cabHoja('Dar de baja', esc(c.nombre)) + `
+    <form class="form" id="fBaja" data-row="${c.row}">
+      <div class="tarjeta">
+        <div class="campo"><label for="bDias">Días que le esperaste</label>
+          <input id="bDias" name="dias" inputmode="numeric" value="${espera}" autocomplete="off">
+          <span class="ayuda" id="bDiasAyuda"></span></div>
+      </div>
+      <div class="tarjeta">
+        <span class="etq">Sus lugares</span>
+        <div id="bLugares"><span class="ayuda">Buscando en qué cuentas está…</span></div>
+        <span class="ayuda">El nombre queda en su lugar, reservado por si vuelve. Marcá las cuentas a las que les tenés que cambiar la contraseña.</span>
+      </div>
+      <button class="btn btn-peligro btn-bloque" type="submit">Dar de baja</button>
+    </form>`);
+  ayudaDias($('#fBaja'));
+  api('ubicarCliente', c.nombre).then(lugares => {
+    S._bajaLugares = lugares;
+    const box = $('#bLugares'); if (!box) return;
+    box.innerHTML = lugares.length
+      ? lugares.map((u, k) => `<label class="check"><input type="checkbox" name="marca" value="${k}" ${u.inactiva ? '' : 'checked'}> <span>Marcar "cerrar" en <b>${esc(u.hoja)}</b>, ${esc(u.cuenta || u.plan || 'fila ' + u.row)}${u.inactiva ? ' <small class="ayuda">(cuenta para reactivar)</small>' : ''}</span></label>`).join('')
+      : '<span class="ayuda">No aparece en ninguna cuenta con este nombre.</span>';
+  }).catch(() => { const box = $('#bLugares'); if (box) box.innerHTML = '<span class="ayuda">No se pudo buscar en las cuentas. Podés darlo de baja igual.</span>'; });
+}
+function ayudaDias(f) {
+  const n = Math.round(Number(digitos(f.dias.value)) || 0);
+  f.querySelector('#bDiasAyuda').textContent = n > 0 ? `En Monto queda -${n}, como lo hacés a mano.` : 'Con 0 el monto no se toca.';
+}
+async function guardarBaja(f) {
+  const c = S.porRow.get(Number(f.dataset.row));
+  const dias = Math.max(0, Math.round(Number(digitos(f.dias.value)) || 0));
+  const lugares = S._bajaLugares || [];
+  const marcas = [...f.querySelectorAll('[name=marca]:checked')].map(x => lugares[Number(x.value)]).filter(Boolean);
+  const nombreLugar = u => esc(u.hoja + ', ' + (u.cuenta || u.plan || 'fila ' + u.row));
+  const ok = await confirmarResumen('¿Dar de baja a este cliente?', '', [
+    ['Cliente', `<b>${esc(c.nombre)}</b>`],
+    ['Servicios', serviciosTxt(c.servicios)],
+    ['Vencimiento', cambio(pISO(c.venc) ? dmy(c.venc) : 'sin fecha', 'dado de baja')],
+    dias > 0 && ['Monto', cambio(typeof c.monto === 'number' ? gs(c.monto) : '', `-${dias} (esperó ${dias} ${plural(dias, 'día', 'días')})`)],
+    marcas.length && ['Marcar "cerrar"', marcas.map(nombreLugar).join('<br>')]
+  ], [
+    dias > 10 && [`Son ${dias} días de espera. Revisá que sea correcto.`, false],
+    lugares.length && !marcas.length && ['No vas a marcar ninguna cuenta para cambiar la contraseña.', false]
+  ], 'Dar de baja');
+  if (!ok) return;
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const r = await api('darDeBaja', c.row, c.nombre, dias, marcas.map(u => ({ hoja: u.hoja, row: u.row })));
+    const nuevo = actualizarCliente(r.cliente);
+    const filas = r.marcas.map(m => `<li class="pend-fila"><span><b>${esc(m.hoja)}, ${esc(m.cuenta || 'fila ' + m.row)}</b>
+        <small>${m.ok ? 'marcado "cerrar"' : 'no se marcó: ' + esc(m.motivo || '')}</small></span>
+        ${puede('cambiarPass') ? `<button class="btn btn-sm" data-accion="pass-lugar" data-hoja="${esc(m.hoja)}" data-fila="${m.row}">Cambiar contraseña</button>` : ''}</li>`).join('');
+    hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Dado de baja</h2>
+      <p>${esc(nuevo.nombre)}${dias ? `, esperó ${dias} ${plural(dias, 'día', 'días')}` : ''}</p></div>
+      ${filas ? `<ul class="lista" style="background:var(--surface);border-radius:var(--r-l);padding:4px 12px;margin-bottom:14px">${filas}</ul>` : ''}
+      <div class="pila"><button class="btn" data-accion="cerrar">Listo</button></div>`);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Dar de baja'; }
+}
+// Abrir el cambio de contraseña de la cuenta que tiene ese lugar
+async function passDeLugar(h, fila) {
+  const data = await cargarHoja(h);
+  if (!data) return;
+  const i = data.cuentas.findIndex(c => c.slots.some(sl => sl.row === Number(fila)));
+  if (i < 0) return toast('No encontré esa cuenta. Tocá Actualizar.', true);
+  if (!data.cuentas[i].passCol || !data.cuentas[i].infoRow) return toast('Esa cuenta no tiene contraseña cargada en la planilla.', true);
+  abrirCambiarPass(i);
+}
+
+/* ================================================================
+   Pendientes: cuentas para cerrar y lugares para liberar
+   ================================================================ */
+const txtPend = p => p.libre ? 'Lugar libre, falta cambiar la contraseña'
+  : p.noEsta ? 'No está en la base'
+  : 'Dado de baja' + (p.hace != null ? ` hace ${p.hace} ${plural(p.hace, 'día', 'días')}` : '') + (p.espero ? `, esperó ${p.espero}` : '');
+async function abrirPendientes() {
+  S.fPend = S.fPend || 'todo';
+  hoja.abrir(cabHoja('Pendientes', 'Cuentas para cerrar y lugares para liberar') +
+    '<div id="pendCuerpo"><div class="vacio">Revisando todas las hojas de servicio…<br>Puede tardar unos segundos.</div></div>');
+  try {
+    S.pend = await api('getPendientes');
+    renderPendientes();
+  } catch (e) { const box = $('#pendCuerpo'); if (box) box.innerHTML = `<div class="vacio"><strong>No se pudo revisar</strong>${esc(msgError(e))}</div>`; }
+}
+function renderPendientes() {
+  const box = $('#pendCuerpo'); if (!box || !S.pend) return;
+  let nCerrar = 0, nLiberar = 0;
+  S.pend.forEach(h => h.cuentas.forEach(c => { if (c.slots.some(p => p.cerrar)) nCerrar++; nLiberar += c.slots.filter(p => !p.libre && (p.baja || p.noEsta)).length; }));
+  const f = S.fPend;
+  const chips = [['todo', 'Todo', ''], ['cerrar', 'Para cerrar', nCerrar], ['liberar', 'Para liberar', nLiberar]]
+    .map(([k, lab, n]) => `<button class="chip" data-accion="f-pend" data-f="${k}" aria-pressed="${f === k}">${lab}${n !== '' ? ` <b>${n}</b>` : ''}</button>`).join('');
+  const bloques = S.pend.map((h, hi) => {
+    const cuentas = h.cuentas.map((c, ci) => {
+      const lugares = c.slots.map((p, si) => ({ p, si })).filter(({ p }) =>
+        f === 'todo' || (f === 'cerrar' ? p.cerrar : !p.libre && (p.baja || p.noEsta)));
+      const tieneCerrar = c.slots.some(p => p.cerrar);
+      if (!lugares.length && !(f === 'cerrar' && tieneCerrar)) return '';
+      const filas = lugares.map(({ p, si }) => `<li class="pend-fila"><span><b>${p.libre ? 'Libre' : esc(p.usuario)}${p.cerrar ? '<span class="marca-cerrar">cerrar</span>' : ''}</b><small>${esc(txtPend(p))}</small></span>
+        ${!p.libre && (p.baja || p.noEsta) && puede('liberarLugar') ? `<button class="btn btn-sm" data-accion="pend-liberar" data-h="${hi}" data-c="${ci}" data-s="${si}">Liberar</button>` : ''}</li>`).join('');
+      return `<article class="cuenta">
+        <header class="cuenta-cab"><div><h3>${esc(c.nombre || c.plan || 'Grupo')}</h3><p>${esc([c.nombre ? c.plan : '', c.correo].filter(Boolean).join(', '))}</p></div>
+          <div class="pills">${tieneCerrar ? '<span class="pill cerrar">Cerrar</span>' : ''}</div></header>
+        <ul class="lugares">${filas}</ul>
+        <footer class="cuenta-pie">${tieneCerrar && c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="link" data-accion="pend-pass" data-h="${hi}" data-c="${ci}">Cambiar contraseña</button>` : ''}${c.aviso ? `<button class="link" data-accion="copiar-txt" data-t="${esc(c.aviso)}">Copiar aviso</button>` : ''}</footer>
+      </article>`;
+    }).join('');
+    if (!cuentas) return '';
+    const liberables = h.cuentas.reduce((a, c) => a + c.slots.filter(p => !p.libre && (p.baja || p.noEsta)).length, 0);
+    return `<section class="pend-hoja"><h3>${esc(h.hoja)}</h3>${cuentas}
+      ${f !== 'cerrar' && liberables > 1 && puede('liberarLugar') ? `<button class="btn btn-bloque" data-accion="pend-liberar-hoja" data-h="${hi}">Liberar los ${liberables} de ${esc(h.hoja)}</button>` : ''}</section>`;
+  }).join('');
+  box.innerHTML = `<div class="chips" role="group" aria-label="Filtrar pendientes">${chips}</div>` +
+    (bloques || `<div class="vacio"><strong>Nada pendiente</strong>${f === 'cerrar' ? 'No hay cuentas marcadas para cerrar.' : f === 'liberar' ? 'No hay lugares de dados de baja.' : 'Todo al día.'}</div>`);
+}
+// Después de liberar o cerrar: sacar de la lista lo que ya no está pendiente
+function limpiarPend() {
+  S.pend.forEach(h => { h.cuentas.forEach(c => { c.slots = c.slots.filter(p => p.cerrar || (!p.libre && (p.baja || p.noEsta))); }); h.cuentas = h.cuentas.filter(c => c.slots.length); });
+  S.pend = S.pend.filter(h => h.cuentas.length);
+}
+async function liberarPend(hi, lista) {
+  const h = S.pend[hi];
+  const nombres = lista.map(({ p }) => p.usuario);
+  const texto = lista.length === 1
+    ? `¿Liberar el lugar de <b>${esc(nombres[0])}</b> en ${esc(h.hoja)}? El cliente sigue en la base.`
+    : `¿Liberar <b>${lista.length} lugares</b> en ${esc(h.hoja)}? Los clientes siguen en la base.`;
+  if (!await confirmar(texto, 'Liberar', true)) return;
+  try {
+    const r = await api('liberarVarios', h.hoja, lista.map(({ p, c }) => ({ row: p.row, col: c.usuarioCol, nombre: p.usuario })));
+    mezclarServicio(h.hoja, r.servicio);
+    lista.forEach(({ p }) => { if (!r.saltados.includes(p.usuario)) { p.libre = true; p.usuario = ''; p.baja = p.noEsta = false; } });
+    limpiarPend(); renderPendientes();
+    toast(r.saltados.length ? `Liberados ${r.liberados}. No se tocaron ${r.saltados.length} porque cambiaron en la planilla.` : `${r.liberados} ${plural(r.liberados, 'lugar liberado', 'lugares liberados')}`);
+  } catch (e) { toast(msgError(e), true); }
+}
+function abrirPassPend(hi, ci) {
+  const h = S.pend[hi], c = h.cuentas[ci];
+  hoja.cambiar(cabHoja('Cambiar contraseña', esc(`${h.hoja}, ${c.nombre || c.plan}`)) +
+    `<form class="form" id="fPassPend" data-h="${hi}" data-c="${ci}"><div class="tarjeta">
+      <div class="campo"><label for="ppNueva">Contraseña nueva</label><input id="ppNueva" name="nueva" value="${esc(c.pass)}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      ${c.ultimoCambioCol ? '<label class="check"><input type="checkbox" name="fecha" checked> Poner hoy como último cambio</label>' : ''}
+      <label class="check"><input type="checkbox" name="limpiar" checked> Quitar los "cerrar" de esta cuenta</label>
+    </div><button class="btn btn-pri btn-bloque" type="submit">Guardar contraseña</button>
+    <button class="btn btn-bloque" type="button" data-accion="volver-pend" style="margin-top:8px">Volver a pendientes</button></form>`);
+}
+async function guardarPassPend(f) {
+  const h = S.pend[Number(f.dataset.h)], c = h.cuentas[Number(f.dataset.c)];
+  const nueva = f.nueva.value.trim();
+  if (!nueva || nueva === c.pass) return toast('Escribí una contraseña distinta.', true);
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const data = await api('cambiarPassCuenta', h.hoja, c.infoRow, c.passCol, c.pass, nueva, f.fecha && f.fecha.checked ? c.ultimoCambioCol : null, f.limpiar.checked);
+    mezclarServicio(h.hoja, data);
+    const nc = data.cuentas.find(x => x.infoRow === c.infoRow);
+    c.pass = nueva; if (nc) c.aviso = nc.aviso;
+    if (f.limpiar.checked) c.slots.forEach(p => { p.cerrar = false; });
+    limpiarPend();
+    hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Contraseña guardada</h2><p>${esc(h.hoja)}, ${esc(c.nombre || c.plan)}. Avisá a los clientes de esta cuenta.</p>
+      <div class="pila">${c.aviso ? `<button class="btn btn-pri" data-accion="copiar-txt" data-t="${esc(c.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
+      <button class="btn" data-accion="volver-pend">Volver a pendientes</button></div></div>`);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar contraseña'; }
+}
+
+/* ================================================================
+   Vista: Cuentas
+   ================================================================ */
+function adivinarHoja(servicios) {
+  const k = s => norm(s).replace(/ /g, '');
+  const partes = String(servicios || '').split(',').map(x => k(x.split('-')[0])).filter(Boolean);
+  for (const p of partes) {
+    const h = S.servicios.find(n => { const kn = k(n); return kn && (kn === p || p.startsWith(kn) || kn.startsWith(p)); });
+    if (h) return h;
+  }
+  return null;
+}
+const cicloTxt = s => { s = String(s || '').trim().toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
+
+function renderCuentas() {
+  const verPend = !S.asignando && (puede('cambiarPass') || puede('liberarLugar'));
+  $('#chipsServicios').innerHTML = (verPend ? '<button class="chip" data-accion="pendientes">Pendientes</button>' : '') + S.servicios.map(h => `<button class="chip" data-accion="hoja" data-h="${esc(h)}" aria-pressed="${S.hojaSel === h}">${esc(h)}</button>`).join('');
+  $('#bannerAsignar').innerHTML = S.asignando
+    ? `<div class="banner"><span>Tocá un lugar libre para asignar a <b>${esc(S.asignando.nombre)}</b></span><button data-accion="cancelar-asignar">Cancelar</button></div>` : '';
+  const cuerpo = $('#cuentasCuerpo');
+  if (!S.serviciosCargados && !S.hojaSel) {
+    cuerpo.innerHTML = '<div class="vacio">Cargando la lista de servicios…</div>';
+    if (S.vista === 'cuentas') $('#subtitulo').textContent = 'Cargando servicios…';
+    return;
+  }
+  if (!S.hojaSel) {
+    cuerpo.innerHTML = `<div class="vacio"><strong>Elegí un servicio</strong>Vas a ver cada cuenta con su correo, contraseña y lugares.</div>`;
+    if (S.vista === 'cuentas') $('#subtitulo').textContent = `${S.servicios.length} servicios`;
+    return;
+  }
+  if (!S.cacheServ[S.hojaSel]) {
+    cuerpo.innerHTML = '<div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>';
+    cargarHoja(S.hojaSel);
+    return;
+  }
+  cuerpo.innerHTML = `
+    <div class="buscador"><div class="campo-busca">${ICON.buscar}<input id="qCuentas" type="search" value="${esc(S.qCuentas)}" placeholder="Buscar correo, cuenta o cliente" autocomplete="off" aria-label="Buscar en ${esc(S.hojaSel)}"></div></div>
+    <div class="chips" id="chipsFCuentas" role="group" aria-label="Filtrar cuentas"></div>
+    <p class="resumen" id="resumenCuentas"></p>
+    <div id="listaCuentas"></div>`;
+  renderListaCuentas();
+}
+function renderListaCuentas() {
+  const data = S.cacheServ[S.hojaSel];
+  if (!data || !$('#listaCuentas')) return;
+  const q = norm(S.qCuentas);
+  // Las cuentas "reactivar" no están activas: no suman lugares libres y van aparte
+  const libresDe = c => c.inactiva ? 0 : c.slots.filter(s => s.libre).length;
+  const activas = data.cuentas.filter(c => !c.inactiva), nInact = data.cuentas.length - activas.length;
+  let lista = data.cuentas.map((c, i) => [c, i]);
+  if (S.fCuentas === 'inactivas') lista = lista.filter(([c]) => c.inactiva);
+  else if (!q) lista = lista.filter(([c]) => !c.inactiva);   // buscando, también muestra las inactivas
+  if (S.fCuentas === 'libres') lista = lista.filter(([c]) => libresDe(c) > 0);
+  if (S.fCuentas === 'llenas') lista = lista.filter(([c]) => !c.inactiva && c.slots.length && libresDe(c) === 0);
+  if (q) lista = lista.filter(([c]) => norm([c.nombre, c.plan, c.correo, ...c.slots.map(s => s.usuario || '')].join(' ')).includes(q));
+  const totLibres = activas.reduce((a, c) => a + libresDe(c), 0);
+  $('#chipsFCuentas').innerHTML = [['todas', 'Activas'], ['libres', 'Con lugares libres'], ['llenas', 'Llenas'], ...(nInact ? [['inactivas', `Para reactivar <b>${nInact}</b>`]] : [])]
+    .map(([k, lab]) => `<button class="chip" data-accion="f-cuentas" data-f="${k}" aria-pressed="${S.fCuentas === k}">${lab}</button>`).join('');
+  const mostrando = (S.fCuentas !== 'todas' || q) && S.fCuentas !== 'inactivas' ? `. Mostrando ${lista.length}.` : '';
+  $('#resumenCuentas').textContent = S.fCuentas === 'inactivas'
+    ? `${nInact} ${plural(nInact, 'cuenta para reactivar', 'cuentas para reactivar')}. Sus lugares no cuentan como libres.`
+    : `${activas.length} ${plural(activas.length, 'cuenta activa', 'cuentas activas')}, ${totLibres} ${plural(totLibres, 'lugar libre', 'lugares libres')}${nInact ? `, ${nInact} para reactivar` : ''}${mostrando}`;
+  $('#listaCuentas').innerHTML = (lista.length
+      ? lista.slice(0, S.limCuentas).map(([c, i]) => tarjetaCuenta(c, i)).join('')
+      : `<div class="vacio"><strong>Sin cuentas para mostrar</strong>Cambiá el filtro o la búsqueda.</div>`) +
+    (lista.length > S.limCuentas ? `<button class="btn mas" data-accion="mas-cuentas">Mostrar ${Math.min(25, lista.length - S.limCuentas)} más de ${lista.length - S.limCuentas}</button>` : '');
+  if (S.vista === 'cuentas') $('#subtitulo').textContent = S.servViejo[S.hojaSel]
+    ? `${S.hojaSel}: datos ${horaDe(S.servViejo[S.hojaSel])}, actualizando…`
+    : `${S.hojaSel}: ${totLibres} ${plural(totLibres, 'lugar libre', 'lugares libres')}`;
+}
+function tarjetaCuenta(c, i) {
+  const libres = c.slots.filter(s => s.libre).length;
+  const titulo = c.nombre || c.plan || 'Grupo sin nombre';
+  const sub = c.nombre ? c.plan : '';
+  const pills = [];
+  if (c.inactiva) pills.push('<span class="pill inactiva">Para reactivar</span>');
+  if (c.slots.some(sl => sl.cerrar)) pills.push('<span class="pill cerrar">Cerrar</span>');
+  if (libres && !c.inactiva) pills.push(`<span class="pill libre">${libres} ${plural(libres, 'libre', 'libres')}</span>`);
+  if (c.ciclo && !c.inactiva) pills.push(`<span class="pill">${esc(cicloTxt(c.ciclo))}</span>`);
+  if (c.ocupacion) pills.push(`<span class="pill">${esc(c.ocupacion)}</span>`);
+  const cred = c.correo ? `<div class="cred">
+      <button class="cred-item" data-accion="copiar-cuenta" data-v="correo" data-i="${i}" aria-label="Copiar usuario o correo">${ICON.copiar}<span>${esc(c.correo)}</span></button>
+      ${c.pass ? `<button class="cred-item" data-accion="ver-pass" data-i="${i}" aria-label="Mostrar contraseña">${ICON.ojo}<span data-pass>••••••••</span></button>
+      <button class="cred-item" data-accion="copiar-cuenta" data-v="pass" data-i="${i}" aria-label="Copiar contraseña">${ICON.copiar}<span>Contraseña</span></button>` : ''}
+    </div>` : '';
+  const meta = [c.ultimoCambio ? `Último cambio ${esc(c.ultimoCambio)}` : '', ...c.notas.map(esc)].filter(Boolean).join('. ');
+  return `<article class="cuenta ${c.inactiva ? 'inactiva' : ''}" id="cta-${i}">
+    <header class="cuenta-cab"><div><h3>${esc(titulo)}</h3>${sub ? `<p>${esc(sub)}</p>` : ''}</div><div class="pills">${pills.join('')}</div></header>
+    ${cred}${meta ? `<p class="cuenta-meta">${meta}</p>` : ''}
+    ${c.slots.length ? `<ul class="lugares">${c.slots.map((s, j) => lugarHTML(s, i, j, c.inactiva)).join('')}</ul>` : ''}
+    <footer class="cuenta-pie">${c.aviso ? `<button class="link" data-accion="copiar-cuenta" data-v="aviso" data-i="${i}">Copiar aviso</button>` : ''}${c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="link" data-accion="cambiar-pass" data-i="${i}">Cambiar contraseña</button>` : ''}</footer>
+  </article>`;
+}
+function lugarHTML(s, i, j, inactiva = false) {
+  const marca = s.cerrar ? '<span class="marca-cerrar">cerrar</span>' : '';
+  if (s.libre && inactiva) return `<li><div class="lugar libre"><span class="lugar-nom">Libre${marca}</span><span class="lugar-acc" style="color:var(--muted)">No disponible</span></div></li>`;
+  if (s.libre) return `<li><button class="lugar libre" data-accion="lugar" data-i="${i}" data-j="${j}" data-fila="${s.row}"><span class="lugar-nom">Libre${marca}</span><span class="lugar-acc">${S.asignando ? 'Asignar acá' : 'Asignar'}</span></button></li>`;
+  const d = s.dias === undefined || s.dias === '' ? NaN : Number(s.dias);
+  const txt = isNaN(d) ? (s.fecha || 'Sin fecha') : d === 0 ? 'Hoy' : `${d} d`;
+  return `<li><button class="lugar" data-accion="lugar" data-i="${i}" data-j="${j}" data-fila="${s.row}"><span class="lugar-nom">${esc(s.usuario)}${s.huerfano ? '<em class="alerta">no está en la base</em>' : ''}</span><span class="lugar-der">${marca}<span class="mini t-${tipoDias(d)}">${esc(txt)}</span></span></button></li>`;
+}
+
+/* Copia local de las últimas hojas abiertas: Cuentas abre al instante y se actualiza por detrás */
+const CLAVE_SERV = 'as_serv_v1';
+const servLocales = {
+  todo() { try { return JSON.parse(localStorage.getItem(CLAVE_SERV) || '{}'); } catch (e) { return {}; } },
+  leer(h) { return this.todo()[h] || null; },
+  guardar(h, data) {
+    try {
+      const t = this.todo();
+      t[h] = { ts: Date.now(), data };
+      const orden = () => Object.keys(t).sort((a, b) => t[b].ts - t[a].ts);
+      orden().slice(6).forEach(k => delete t[k]);                 // las 6 más recientes
+      let txt = JSON.stringify(t);
+      while (txt.length > 2500000 && Object.keys(t).length > 1) { delete t[orden().pop()]; txt = JSON.stringify(t); }
+      localStorage.setItem(CLAVE_SERV, txt);
+    } catch (e) { }
+  },
+  borrar() { try { localStorage.removeItem(CLAVE_SERV); } catch (e) { } }
+};
+// El servidor a veces devuelve solo la cuenta que cambió: se reemplaza esa y queda el resto
+function mezclarServicio(hoja, data) {
+  if (!data) return data;
+  if (!data.parcial) { S.cacheServ[hoja] = data; delete S.servViejo[hoja]; servLocales.guardar(hoja, data); return data; }
+  const actual = S.cacheServ[hoja];
+  if (!actual) return data;
+  for (const c of data.cuentas) {
+    const i = actual.cuentas.findIndex(x => x.header === c.header);
+    if (i >= 0) actual.cuentas[i] = c; else { delete S.cacheServ[hoja]; return data; }
+  }
+  if (!S.servViejo[hoja]) servLocales.guardar(hoja, actual);
+  return data;
+}
+
+const enVuelo = {};
+async function cargarHoja(h, forzar = false) {
+  if (forzar) { delete S.cacheServ[h]; delete S.servViejo[h]; if (S.hojaSel === h) { renderCuentas(); return enVuelo[h]; } }
+  if (S.hojaSel !== h) { S.hojaSel = h; renderCuentas(); return enVuelo[h] || S.cacheServ[h]; }
+  if (S.cacheServ[h] && !S.servViejo[h]) return S.cacheServ[h];
+  if (enVuelo[h]) return enVuelo[h];
+  if (!S.cacheServ[h] && !forzar) {
+    const loc = servLocales.leer(h);
+    if (loc) { S.cacheServ[h] = loc.data; S.servViejo[h] = loc.ts; }
+  }
+  enVuelo[h] = api('getServicio', h).then(data => {
+    S.cacheServ[h] = data; delete S.servViejo[h];
+    servLocales.guardar(h, data);
+    if (S.hojaSel === h) $('#listaCuentas') ? renderListaCuentas() : renderCuentas();
+    return data;
+  }).catch(e => {
+    toast(msgError(e), true);
+    if (S.hojaSel === h && !S.cacheServ[h]) $('#cuentasCuerpo').innerHTML = `<div class="vacio"><strong>No se pudo abrir ${esc(h)}</strong>${esc(msgError(e))}</div>`;
+    return S.cacheServ[h] || null;
+  }).finally(() => { delete enVuelo[h]; });
+  if (S.servViejo[h] && S.hojaSel === h) renderCuentas();   // mostrar ya la copia guardada
+  return enVuelo[h];
+}
+const cuentaSel = i => S.cacheServ[S.hojaSel].cuentas[Number(i)];
+
+function abrirLugar(i, j) {
+  const c = cuentaSel(i), s = c.slots[Number(j)];
+  const titulo = c.nombre || c.plan || 'Grupo';
+  if (s.libre) {
+    if (S.asignando) return asignar(i, j, S.asignando.nombre);
+    hoja.abrir(cabHoja('Lugar libre', esc(`${S.hojaSel}, ${titulo}`)) +
+      `<div class="campo-busca" style="margin-bottom:10px">${ICON.buscar}<input id="qAsignar" type="search" placeholder="Buscar cliente para asignar" autocomplete="off" data-i="${i}" data-j="${j}" aria-label="Buscar cliente"></div>
+       <ul class="lista" id="resAsignar"></ul>`);
+    renderPicker(i, j, '');
+    setTimeout(() => $('#qAsignar') && $('#qAsignar').focus(), 250);
+    return;
+  }
+  const cli = S.porNombre.get(claveNombre(s.usuario));
+  const d = Number(s.dias);
+  const estado = s.huerfano ? 'Este nombre no coincide con ningún cliente de BasedeDatos.'
+    : isNaN(d) || s.dias === undefined ? (s.fecha ? esc(s.fecha) : '') : d < 0 ? `Venció hace ${-d} ${plural(-d, 'día', 'días')}, el ${esc(s.fecha)}` : d === 0 ? `Vence hoy` : `Vence en ${d} ${plural(d, 'día', 'días')}, el ${esc(s.fecha)}`;
+  const dato = (k, v) => v && v !== '-' ? `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>` : '';
+  hoja.abrir(cabHoja(s.usuario, estado) +
+    `<div class="pila" style="margin-bottom:14px">
+      ${s.msg && s.numero ? `<a class="btn btn-wa" href="${esc(waLink(s.numero, s.msg))}" target="_blank" rel="noopener">${ICON.wa}Enviar cuenta por WhatsApp</a>` : ''}
+      ${s.msg ? `<button class="btn" data-accion="copiar-txt" data-t="${esc(s.msg)}">${ICON.copiar}Copiar mensaje de la cuenta</button>` : ''}
+      ${cli ? `<button class="btn" data-accion="detalle" data-row="${cli.row}">Ver cliente</button>` : ''}
+    </div>
+    <dl class="datos">${dato('Cuenta', `${S.hojaSel}, ${titulo}`)}${dato('Servicios', s.servicios)}${dato('ID', s.id)}${dato('Número', s.numero ? '+' + s.numero : '')}${dato('PIN', s.pin)}${dato('Dispositivo', s.dispositivo)}${dato('Monto', s.monto ? gs(Number(digitos(s.monto))) : '')}</dl>
+    ${puede('liberarLugar') ? `<button class="link peligro" data-accion="liberar" data-i="${i}" data-j="${j}">Liberar este lugar</button>` : ''}`);
+}
+function renderPicker(i, j, texto) {
+  const ul = $('#resAsignar'); if (!ul) return;
+  let res = buscarClientes(texto, 'activos');
+  if (!texto) {
+    const k = norm(S.hojaSel).replace(/ /g, '');
+    res = res.filter(c => norm(c.servicios).replace(/ /g, '').includes(k)).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  }
+  res = res.slice(0, 12);
+  ul.innerHTML = res.length
+    ? res.map(c => `<li class="fila"><button class="fila-main" data-accion="elegir-asignar" data-i="${i}" data-j="${j}" data-row="${c.row}">${badge(c)}<span class="fila-txt"><span class="nom">${esc(c.nombre)}</span><span class="sub">${esc(c.servicios)}</span></span></button></li>`).join('')
+    : `<li class="vacio">${texto ? 'Sin coincidencias entre los clientes activos.' : 'Escribí el nombre del cliente.'}</li>`;
+}
+async function asignar(i, j, nombre) {
+  const c = cuentaSel(i), s = c.slots[Number(j)];
+  if (!await confirmar(`¿Asignar <b>${esc(nombre)}</b> a ${esc(S.hojaSel)}, ${esc(c.nombre || c.plan || 'este grupo')}?`, 'Asignar')) return;
+  try {
+    const hojaActual = S.hojaSel;
+    const data = await api('asignarLugar', hojaActual, s.row, c.usuarioCol, nombre);
+    mezclarServicio(hojaActual, data);
+    S.asignando = null;
+    renderCuentas();
+    const nc = data.cuentas.find(x => x.slots.some(y => y.row === s.row));
+    const ns = nc && nc.slots.find(y => y.row === s.row);
+    hoja.abrir(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Asignado</h2><p>${esc(nombre)} en ${esc(hojaActual)}, ${esc(c.nombre || c.plan || '')}</p>
+      <div class="pila">${ns && ns.msg && ns.numero ? `<a class="btn btn-wa" href="${esc(waLink(ns.numero, ns.msg))}" target="_blank" rel="noopener">${ICON.wa}Enviar cuenta por WhatsApp</a>` : ''}
+      <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
+  } catch (e) { toast(msgError(e), true); }
+}
+async function liberar(i, j) {
+  const c = cuentaSel(i), s = c.slots[Number(j)];
+  if (!await confirmar(`¿Liberar el lugar de <b>${esc(s.usuario)}</b>? Solo se borra el nombre de esta hoja, el cliente sigue en la base.`, 'Liberar', true)) return;
+  try {
+    const h = S.hojaSel;
+    mezclarServicio(h, await api('liberarLugar', h, s.row, c.usuarioCol, s.usuario));
+    hoja.cerrar(); renderCuentas(); toast('Lugar liberado');
+  } catch (e) { toast(msgError(e), true); }
+}
+function abrirCambiarPass(i) {
+  const c = cuentaSel(i);
+  hoja.abrir(cabHoja('Cambiar contraseña', esc(`${S.hojaSel}, ${c.nombre || c.plan}`)) +
+    `<form class="form" id="fPass" data-i="${i}"><div class="tarjeta">
+      <div class="campo"><label for="pNueva">Contraseña nueva</label><input id="pNueva" name="nueva" value="${esc(c.pass)}" autocomplete="off" autocapitalize="off" spellcheck="false" required></div>
+      ${c.ultimoCambioCol ? `<label class="check"><input type="checkbox" name="fecha" checked> Poner hoy como último cambio</label>` : ''}
+      ${c.slots.some(sl => sl.cerrar) ? '<label class="check"><input type="checkbox" name="limpiar" checked> Quitar los "cerrar" de esta cuenta</label>' : ''}
+    </div><button class="btn btn-pri btn-bloque" type="submit">Guardar contraseña</button></form>`);
+}
+async function guardarPass(f) {
+  const c = cuentaSel(f.dataset.i);
+  const nueva = f.nueva.value.trim();
+  if (!nueva || nueva === c.pass) return toast('Escribí una contraseña distinta.', true);
+  const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
+  try {
+    const h = S.hojaSel, header = c.header;
+    const data = await api('cambiarPassCuenta', h, c.infoRow, c.passCol, c.pass, nueva, f.fecha && f.fecha.checked ? c.ultimoCambioCol : null, !!(f.limpiar && f.limpiar.checked));
+    mezclarServicio(h, data); renderCuentas();
+    const nc = data.cuentas.find(x => x.header === header);
+    hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Contraseña guardada</h2><p>Avisá a los clientes de esta cuenta.</p>
+      <div class="pila">${nc && nc.aviso ? `<button class="btn btn-pri" data-accion="copiar-txt" data-t="${esc(nc.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
+      <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar contraseña'; }
+}
+async function irALugar(h, fila) {
+  hoja.cerrar();
+  cambiarVista('cuentas');
+  S.fCuentas = 'todas'; S.qCuentas = '';
+  const data = await cargarHoja(h);
+  if (!data) return;
+  const i = data.cuentas.findIndex(c => c.slots.some(s => s.row === Number(fila)));
+  if (i < 0) return;
+  if (data.cuentas[i].inactiva) S.fCuentas = 'inactivas';
+  S.limCuentas = Math.max(25, i + 5);
+  renderCuentas();
+  const el = document.getElementById('cta-' + i);
+  if (el) {
+    el.scrollIntoView({ block: 'start' });
+    el.classList.add('flash');
+    const b = el.querySelector(`[data-fila="${fila}"]`); if (b) b.classList.add('marcado');
+  }
+}
+function empezarAsignar(row) {
+  const c = S.porRow.get(Number(row));
+  S.asignando = { nombre: c.nombre, row: c.row, servicios: c.servicios };
+  hoja.cerrar();
+  cambiarVista('cuentas');
+  S.fCuentas = 'libres'; S.qCuentas = '';
+  const h = adivinarHoja(c.servicios);
+  if (h && h !== S.hojaSel) cargarHoja(h); else renderCuentas();
+}
+
+/* ================================================================
+   Navegación y eventos
+   ================================================================ */
+const TITULOS = { venc: 'Vencimientos', clientes: 'Clientes', cuentas: 'Cuentas', nuevo: 'Nuevo cliente' };
+function cambiarVista(v) {
+  S.vista = v;
+  document.querySelectorAll('.vista').forEach(el => el.classList.toggle('activa', el.id === 'v-' + v));
+  document.querySelectorAll('.tab').forEach(el => el.setAttribute('aria-selected', String(el.dataset.v === v)));
+  $('#titulo').textContent = TITULOS[v];
+  window.scrollTo(0, 0);
+  if (!S.cargado) return;
+  if (v === 'venc') renderVenc();
+  if (v === 'clientes') renderClientes();
+  if (v === 'cuentas') renderCuentas();
+  if (v === 'nuevo') { if (!$('#fNuevo') && !$('#nuevoCuerpo').innerHTML) renderNuevo(); $('#subtitulo').textContent = 'Se agrega al final de BasedeDatos'; }
+}
+function renderTodo() { renderVenc(); renderClientes(); renderCuentas(); if (S.vista === 'nuevo') $('#subtitulo').textContent = 'Se agrega al final de BasedeDatos'; }
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-accion]');
+  if (!el) return;
+  const a = el.dataset.accion, d = el.dataset;
+  if (el.tagName === 'A' && (a === 'copiar-txt')) e.preventDefault();
+  switch (a) {
+    case 'vista': cambiarVista(d.v); break;
+    case 'cerrar': hoja.cerrar(); break;
+    case 'actualizar': cargar(true); break;
+    case 'sesion': cerrarSesion(); break;
+    case 'filtro-venc': S.filtroVenc = d.f; renderVenc(); break;
+    case 'filtro-cli': S.filtroCli = d.f; S.limCli = 50; renderClientes(); break;
+    case 'mas-cli': S.limCli += 50; renderClientes(); break;
+    case 'detalle': abrirDetalle(d.row, hoja.abierta); break;
+    case 'renovar': abrirRenovar(d.row); break;
+    case 'reactivar': abrirReactivar(d.row, d.origen); break;
+    case 'editar': abrirEditar(d.row); break;
+    case 'baja': abrirBaja(d.row); break;
+    case 'pass-lugar': passDeLugar(d.hoja, d.fila); break;
+    case 'pendientes': abrirPendientes(); break;
+    case 'f-pend': S.fPend = d.f; renderPendientes(); break;
+    case 'volver-pend': hoja.cambiar(cabHoja('Pendientes', 'Cuentas para cerrar y lugares para liberar') + '<div id="pendCuerpo"></div>'); renderPendientes(); break;
+    case 'pend-pass': abrirPassPend(Number(d.h), Number(d.c)); break;
+    case 'pend-liberar': { const h = S.pend[Number(d.h)], c = h.cuentas[Number(d.c)]; liberarPend(Number(d.h), [{ p: c.slots[Number(d.s)], c }]); break; }
+    case 'pend-liberar-hoja': { const h = S.pend[Number(d.h)]; const lista = []; h.cuentas.forEach(c => c.slots.forEach(p => { if (!p.libre && (p.baja || p.noEsta)) lista.push({ p, c }); })); liberarPend(Number(d.h), lista); break; }
+    case 'ubicar': ubicar(d.row); break;
+    case 'ir-lugar': irALugar(d.hoja, d.row); break;
+    case 'asignar-cliente': empezarAsignar(d.row); break;
+    case 'cancelar-asignar': S.asignando = null; S.fCuentas = 'todas'; renderCuentas(); break;
+    case 'copiar-txt': copiar(d.t); break;
+    case 'hoja': S.fCuentas = S.asignando ? 'libres' : 'todas'; S.qCuentas = ''; S.limCuentas = 25; S.hojaSel === d.h ? renderCuentas() : cargarHoja(d.h); break;
+    case 'f-cuentas': S.fCuentas = d.f; S.limCuentas = 25; renderListaCuentas(); break;
+    case 'mas-cuentas': S.limCuentas += 25; renderListaCuentas(); break;
+    case 'copiar-cuenta': { const c = cuentaSel(d.i); copiar(d.v === 'pass' ? c.pass : d.v === 'aviso' ? c.aviso : c.correo); break; }
+    case 'ver-pass': { const sp = el.querySelector('[data-pass]'); const c = cuentaSel(d.i); sp.textContent = sp.textContent === c.pass ? '••••••••' : c.pass; break; }
+    case 'lugar': abrirLugar(d.i, d.j); break;
+    case 'elegir-asignar': { const c = S.porRow.get(Number(d.row)); asignar(d.i, d.j, c.nombre); break; }
+    case 'liberar': liberar(d.i, d.j); break;
+    case 'cambiar-pass': abrirCambiarPass(d.i); break;
+    case 'emoji': { const f = el.closest('form'); if (f.id === 'fNuevo') f.dataset.auto = '0'; aplicarEmoji(f, d.e); break; }
+    case 'add-serv': { const f = el.closest('form'); agregarServicio(f, d.s); const box = f.querySelector('#cServVar'); if (box) box.innerHTML = ''; break; }
+    case 'usar-datos': usarDatos(el.closest('form'), d.row); break;
+    case 'ver-coincidencias': { const f = el.closest('form'); delete f.dataset.copiadoDe; revisarExistentes(f); break; }
+    case 'serv-grupo': {
+      const f = el.closest('form'), g = catalogoServicios()[Number(d.g)], box = f.querySelector('#cServVar');
+      if (g.vars.length === 1) { box.innerHTML = ''; agregarServicio(f, g.vars[0]); break; }
+      box.innerHTML = `<div class="variantes"><p>¿Qué tipo de ${esc(g.nombre)}?</p><div class="sugs">${g.vars.map(v => `<button type="button" class="sug" data-accion="add-serv" data-s="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`;
+      break;
+    }
+    case 'serv-mas': cambiarServicio(el.closest('form'), Number(d.k), 1); break;
+    case 'serv-menos': cambiarServicio(el.closest('form'), Number(d.k), -1); break;
+    case 'serv-quitar': cambiarServicio(el.closest('form'), Number(d.k), 0); break;
+    case 'nuevo-otro': $('#nuevoCuerpo').innerHTML = ''; renderNuevo(); break;
+  }
+});
+
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === 'fLogin') entrarPIN(f);
+  if (f.id === 'fBaja') guardarBaja(f);
+  if (f.id === 'fPassPend') guardarPassPend(f);
+  if (f.id === 'fRenovar') guardarRenovar(f);
+  if (f.id === 'fNuevo') guardarNuevo(f);
+  if (f.id === 'fEditar') guardarEditar(f);
+  if (f.id === 'fReactivar') guardarReactivar(f);
+  if (f.id === 'fPass') guardarPass(f);
+});
+
+let tBusca;
+document.addEventListener('input', e => {
+  const t = e.target;
+  const campoFalta = t.closest && t.closest('.campo.falta');
+  if (campoFalta) campoFalta.classList.remove('falta');
+  if (t.hasAttribute('data-miles')) { const d = digitos(t.value); t.value = d ? miles(Number(d)) : ''; }
+  if (t.id === 'qClientes') { clearTimeout(tBusca); tBusca = setTimeout(() => { S.q = t.value; S.limCli = 50; renderClientes(); }, 120); }
+  if (t.id === 'qCuentas') { clearTimeout(tBusca); tBusca = setTimeout(() => { S.qCuentas = t.value; S.limCuentas = 25; renderListaCuentas(); }, 150); }
+  if (t.id === 'qAsignar') renderPicker(t.dataset.i, t.dataset.j, t.value);
+  const f = t.form;
+  if (f && f.id === 'fRenovar') previaRenovar();
+  if (f && f.id === 'fBaja' && t.name === 'dias') ayudaDias(f);
+  if (f && f.id === 'fNuevo') {
+    if (t.name === 'telefono' && !f.pin.dataset.tocado) { const d = telNormal(t.value); f.pin.value = d.length >= 4 ? d.slice(-4) : ''; }
+    if (t.name === 'pin') f.pin.dataset.tocado = '1';
+    if (t.name === 'nombre' || t.name === 'telefono') revisarExistentes(f);
+    if (t.name === 'nombre') { const m = t.value.trim().match(RX_EMOJI_FIN); if (m && m[0] !== f.dataset.finAuto) f.dataset.auto = '0'; if (!t.value.trim()) f.dataset.auto = ''; }
+  }
+  const esCli = f && ['fNuevo', 'fEditar', 'fReactivar'].includes(f.id);
+  if (esCli && (t.name === 'fecha' || t.name === 'meses')) previaForm(f);
+  if (esCli && t.name === 'servicios') renderServicios(f);
+  if (esCli && t.name === 'nombre') revisarNombre(f, f.dataset.row ? Number(f.dataset.row) : -1);
+  if (f && f.id === 'fEditar' && t.name === 'baja') f.fecha.disabled = t.checked;
+});
+document.addEventListener('change', e => {
+  const t = e.target, f = t.form;
+  if (f && f.id === 'fEditar' && t.name === 'baja') { f.fecha.disabled = t.checked; if (!t.checked && !f.fecha.value) f.fecha.value = S.hoy; }
+  if (f && f.id === 'fRenovar') previaRenovar();
+  if (emojiAuto(f) && (t.name === 'nombre' || t.name === 'servicios')) aplicarEmoji(f);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && hoja.abierta) hoja.cerrar(); });
+
+/* ================================================================
+   Carga
+   ================================================================ */
+/*
+ * Copia local de los datos: la app abre al instante con lo último que vio y se
+ * actualiza por detrás. Se borra al cerrar sesión.
+ */
+const CLAVE_DATOS = 'as_datos_v1';
+const datosLocales = {
+  leer() { try { return JSON.parse(localStorage.getItem(CLAVE_DATOS) || 'null'); } catch (e) { return null; } },
+  guardar(parte) { try { localStorage.setItem(CLAVE_DATOS, JSON.stringify(Object.assign(this.leer() || {}, parte))); } catch (e) { } },
+  borrar() { try { localStorage.removeItem(CLAVE_DATOS); } catch (e) { } }
+};
+const hoyDispositivo = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+function horaDe(ts) {
+  const d = new Date(ts), hh = d.toTimeString().slice(0, 5);
+  return d.toDateString() === new Date().toDateString() ? 'de hoy ' + hh : 'del ' + d.toLocaleDateString('es-PY') + ' ' + hh;
+}
+function aplicarInicial(d, desfase = 0) {
+  S.hoy = desfase ? hoyDispositivo() : d.hoy; S.leyenda = d.leyenda; S.msgs = d.msgs;
+  S.usuario = d.usuario || S.usuario; S.permisos = d.permisos || {}; S.reglas = d.reglas || S.reglas; mostrarUsuario();
+  S.perfilAuto = d.perfilAuto !== false;
+  S.clientes = d.clientes.map(dec);
+  if (desfase) S.clientes.forEach(c => { if (typeof c.dias === 'number') c.dias -= desfase; });
+  S.bajasCargadas = false;
+  indexar();
+  S.cargado = true;
+}
+function sumarBajas(lista) {
+  const nuevos = lista.map(dec).filter(c => !S.porRow.has(c.row));
+  S.clientes = S.clientes.concat(nuevos);
+  S.bajasCargadas = true;
+  indexar();
+  if (S.vista === 'clientes') renderClientes();
+  const fn = $('#fNuevo');
+  if (emojiAuto(fn) && fn.dataset.finAuto) aplicarEmoji(fn); else revisarExistentes(fn);
+}
+
+async function cargar(forzar = false, silencioso = false) {
+  let lento, local = null;
+  try {
+    if (!S.cargado) {
+      local = datosLocales.leer();
+      if (local && local.inicial) {
+        // Mostrar ya lo último guardado, corrigiendo los días si pasó la medianoche
+        const [a1, m1, d1] = local.inicial.hoy.split('-').map(Number), [a2, m2, d2] = hoyDispositivo().split('-').map(Number);
+        const desfase = Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 864e5);
+        aplicarInicial(local.inicial, desfase);
+        if (local.bajas) sumarBajas(local.bajas);
+        if (local.servicios) { S.servicios = local.servicios; S.serviciosCargados = true; }
+        cambiarVista(S.vista);
+        $('#subtitulo').textContent = `Datos ${horaDe(local.ts)}, actualizando…`;
+      } else {
+        $('#listaVenc').innerHTML = '<div class="esqueleto"></div>'.repeat(6);
+        lento = setTimeout(() => { if (!S.cargado) $('#subtitulo').textContent = 'La planilla está tardando en responder…'; }, 12000);
+      }
+    }
+    const d = await api('getInicial');
+    const bajasPrevias = local && local.bajas;
+    aplicarInicial(d);
+    datosLocales.guardar({ inicial: d, ts: Date.now() });
+    if (bajasPrevias) S.bajasCargadas = false;
+    if (forzar) { S.cacheServ = {}; S.servViejo = {}; }
+    cambiarVista(S.vista);
+    if (forzar && !silencioso) toast('Datos actualizados');
+
+    // En segundo plano: la lista de hojas de servicio y los dados de baja
+    api('getServiciosLista', forzar).then(lista => {
+      S.servicios = lista; S.serviciosCargados = true;
+      datosLocales.guardar({ servicios: lista });
+      if (S.vista === 'cuentas') {
+        if (S.asignando && !S.hojaSel) { const h = adivinarHoja(S.asignando.servicios); if (h) return cargarHoja(h); }
+        forzar && S.hojaSel ? cargarHoja(S.hojaSel, true) : renderCuentas();
+      }
+    }).catch(e => toast(msgError(e), true));
+    api('getBajas').then(lista => {
+      datosLocales.guardar({ bajas: lista });
+      sumarBajas(lista);
+    }).catch(e => toast('No se pudieron cargar los dados de baja: ' + msgError(e), true));
+  } catch (e) {
+    if (!S.token) return;   // se venció la sesión: ya se muestra la pantalla de PIN
+    if (S.cargado && local && local.inicial) {
+      $('#subtitulo').textContent = `Sin conexión: datos ${horaDe(local.ts)}`;
+      toast(msgError(e), true);
+      return;
+    }
+    $('#subtitulo').textContent = 'No se pudo leer la planilla';
+    $('#listaVenc').innerHTML = `<li class="vacio"><strong>No se pudo leer la planilla</strong>${esc(msgError(e))}<br><button class="btn mas" data-accion="actualizar">Reintentar</button></li>`;
+  } finally { clearTimeout(lento); }
+}
+
+document.querySelectorAll('[data-ico]').forEach(el => el.outerHTML = ICON[el.dataset.ico]);
+const medirTop = () => document.documentElement.style.setProperty('--top-h', $('.top').offsetHeight + 'px');
+medirTop(); addEventListener('resize', medirTop);
+$('#btnActualizar').innerHTML = ICON.actualizar;
+$('#icoBusca').outerHTML = ICON.buscar;
+S.token = sesionGuardada.get();
+if (S.token) cargar(); else mostrarLogin();
+if (!EN_APPS_SCRIPT && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => { });
+}
+</script>
+</body>
+</html>
