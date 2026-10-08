@@ -377,6 +377,12 @@ main{flex:1}
 .pago:active{background:var(--surface-2)}
 .usada-pill{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;color:var(--ok-ink);margin-top:2px}
 .usada-pill svg{width:14px;height:14px}
+.pago-nuevo{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:var(--r-l);padding:12px 14px;margin-bottom:10px;border-left:5px solid var(--c-bar,var(--primary))}
+.pago-nuevo span{flex:1;min-width:0;display:flex;flex-direction:column}
+.pago-nuevo b{font-weight:600}
+.pago-nuevo small{color:var(--muted)}
+.pago-nuevo .link{padding:6px 2px;flex:none}
+.pago-nuevo span .link{align-self:flex-start;padding:6px 0 0;font-size:.875rem;white-space:normal}
 .aviso-usada{display:flex;align-items:center;gap:10px;background:var(--ok-soft);color:var(--ok-ink);border-radius:var(--r-m);padding:10px 12px;margin:0 0 12px}
 .aviso-usada svg{width:22px;height:22px;flex:none}
 .aviso-usada span{flex:1}
@@ -1791,6 +1797,7 @@ async function limpiarNuevo() {
   const f = $('#fNuevo');
   const hayAlgo = f && [...f.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=hidden]), textarea')].some(x => x.value.trim()) || (f && parseServicios(f.servicios.value).length);
   if (hayAlgo && !(await confirmar('¿Borrar todo lo que cargaste? El formulario queda en blanco.', 'Limpiar', true))) return;
+  S.pagoNuevo = null;
   renderNuevo();
   window.scrollTo(0, 0);
   const n = $('#cNombre'); if (n) n.focus();
@@ -1856,17 +1863,27 @@ function revisarNombre(f, filaPropia) {
   return true;
 }
 
-function renderNuevo(exito) {
+function renderNuevo(exito, conPago) {
   if (exito) {
     const c = exito;
     $('#nuevoCuerpo').innerHTML = `<div class="tarjeta" style="background:var(--surface);border-radius:var(--r-l);padding:20px 16px"><div class="exito"><div class="marca">${ICON.ok}</div><h2>Cliente guardado</h2>
-      <p>${esc(c.nombre)}${pISO(c.venc) ? `, vence el ${dmy(c.venc)}` : ''}</p>
+      <p>${esc(c.nombre)}${pISO(c.venc) ? `, vence el ${dmy(c.venc)}` : ''}${conPago ? '<br><small>La transferencia quedó usada para este cliente.</small>' : ''}</p>
       <div class="pila"><button class="btn btn-pri" data-accion="asignar-cliente" data-row="${c.row}">Asignar a un lugar libre</button>
       <button class="btn" data-accion="detalle" data-row="${c.row}">Ver cliente</button>
       <button class="btn" data-accion="nuevo-otro">Cargar otro</button></div></div></div>`;
     return;
   }
-  $('#nuevoCuerpo').innerHTML = `<form class="form" id="fNuevo" novalidate>${camposCliente({}, 'nuevo')}
+  const pg = S.pagoNuevo;
+  // Cliente nuevo desde Pagos: el monto sale de la transferencia; la activación es hoy y el nombre se escribe a mano
+  // (a veces paga otra persona), con un botón para copiar el de quien pagó
+  const desdePago = pg ? { monto: pg.monto.moneda === 'PYG' ? pg.monto.n : '' } : {};
+  const nomPago = pg ? nombreDePago(pg) : '';
+  $('#nuevoCuerpo').innerHTML = `${pg ? `<div class="pago-nuevo c-${pg.cuenta.k}"><span><b>Pago de ${esc(tituloPalabras(pg.pagador) || 'sin nombre')}</b>
+      <small>${esc(textoMonto(pg.monto))} · ${esc(pg.cuenta.nombre)} · ${esc(dmy(pg.dia).slice(0, 5))} ${esc(pg.hora)}</small>
+      <small>Al guardar, la transferencia queda usada para este cliente.</small>
+      ${nomPago ? `<button class="link" type="button" data-accion="usar-nombre-pago">Usar "${esc(nomPago)}" como nombre</button>` : ''}</span>
+    <button class="link" type="button" data-accion="quitar-pago-nuevo">Quitar</button></div>` : ''}
+  <form class="form" id="fNuevo" novalidate>${camposCliente(desdePago, 'nuevo')}
     <button class="btn btn-pri btn-bloque" type="submit">Guardar cliente</button>
     <button class="btn btn-bloque btn-suave" type="button" data-accion="limpiar-nuevo">${ICON.borrar}Limpiar formulario</button></form>`;
   renderServicios($('#fNuevo'));
@@ -1983,14 +2000,25 @@ async function guardarNuevo(f) {
     d.correo && ['Correo', esc(d.correo)],
     ['Activación', dmy(d.fecha)],
     ['Vence', `<b>${dmy(vence)}</b>`],
-    ['Monto', d.monto ? gs(Number(d.monto)) : 'sin monto']
-  ], [...avisosFecha(n, vence), !d.servicios && ['No tiene servicios cargados.', false], !d.monto && ['No tiene monto cargado.', false]], 'Guardar');
+    ['Monto', d.monto ? gs(Number(d.monto)) : 'sin monto'],
+    S.pagoNuevo && ['Pagó con', `Transferencia de ${esc(tituloPalabras(S.pagoNuevo.pagador) || 'sin nombre')}, ${esc(textoMonto(S.pagoNuevo.monto))}`]
+  ], [...avisosFecha(n, vence), !d.servicios && ['No tiene servicios cargados.', false], !d.monto && ['No tiene monto cargado.', false],
+      S.pagoNuevo && S.pagoNuevo.monto.moneda === 'PYG' && Number(d.monto) && Number(d.monto) !== S.pagoNuevo.monto.n && [`El monto (${gs(Number(d.monto))}) no es igual a la transferencia (${gs(S.pagoNuevo.monto.n)}).`, false]], 'Guardar');
   if (!ok) return;
   const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = 'Guardando…';
   try {
-    const c = actualizarCliente(await api('nuevoCliente', d));
-    renderNuevo(c);
-    toast('Cliente guardado');
+    const pago = S.pagoNuevo;
+    const c = actualizarCliente(await api('nuevoCliente', d, pago ? pagoParaServidor(pago) : null));
+    if (pago) {
+      // igual que al renovar con una transferencia: queda usada y se recuerda quién paga por este cliente
+      S.pagosUsados = Object.assign({}, S.pagosUsados || {}, { [pago.id]: { cliente: c.nombre, usuario: S.usuario, ts: Date.now(), monto: pago.monto.n, pagador: tituloPalabras(pago.pagador) } });
+      const k = clavePagador(pago.pagador);
+      if (k && nombreDePago(pago)) S.pagosVinc = Object.assign({}, S.pagosVinc || {}, { [k]: [c.nombre, ...((S.pagosVinc || {})[k] || []).filter(x => x !== c.nombre)].slice(0, 6) });
+      guardarPagosLocal({ lista: S.pagosCrudo || [], ultimaCarga: S.pagosCarga, hoy: S.pagosHoy, usados: S.pagosUsados, vinculos: S.pagosVinc });
+      S.pagoNuevo = null;
+    }
+    renderNuevo(c, !!pago);
+    toast(pago ? 'Cliente guardado y transferencia marcada como usada' : 'Cliente guardado');
   } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar cliente'; }
 }
 
@@ -2782,7 +2810,7 @@ function abrirPago(i) {
   const listaSug = sug.length ? `<h3 class="sub-tit">¿De qué cliente es?</h3>
     <ul class="lista">${sug.map(({ c, motivo }) => `<li class="fila"><button class="fila-main" data-accion="detalle" data-row="${c.row}">${badge(c)}<span class="fila-txt"><span class="nom">${nombreHTML(c.nombre)}</span><span class="sub">${esc(motivo)}</span></span></button>
       <span class="fila-acc"><button class="btn btn-sm btn-pri" data-accion="renovar-con-pago" data-row="${c.row}">${tipo(c) === 'baja' ? 'Reactivar' : 'Renovar'}</button></span></li>`).join('')}</ul>`
-    : (u ? '' : '<p class="ayuda" style="margin:14px 2px 0">No encontré clientes que coincidan. Vinculala vos con el botón de abajo.</p>');
+    : (u ? '' : '<p class="ayuda" style="margin:14px 2px 0">No encontré clientes que coincidan. Si es un cliente nuevo, crealo con el botón de abajo; si no, vinculala vos.</p>');
   hoja.abrir(`${cabHoja(nombre, '')}
     <div class="pago-detalle c-${p.cuenta.k}">
       <span class="cta-pill">${esc(p.cuenta.nombre)}</span>
@@ -2792,11 +2820,26 @@ function abrirPago(i) {
     <dl class="datos">${filas.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
     ${listaSug}
     <div class="pila" style="margin-top:16px">
-      ${u ? '' : `<button class="btn" data-accion="vincular-pago">${ICON.gente}Vincular con otro cliente</button>`}
+      ${u ? '' : `<button class="btn" data-accion="vincular-pago">${ICON.gente}Vincular con otro cliente</button>
+      <button class="btn${sug.length ? '' : ' btn-pri'}" data-accion="nuevo-con-pago">${ICON.mas}Es un cliente nuevo: crearlo</button>`}
       <button class="btn" data-accion="copiar-pago">${ICON.copiar}Copiar datos</button></div>`);
 }
 const fechaHoraCorta = ts => { const d = new Date(ts); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const pagoParaServidor = p => ({ id: p.id, pagador: tituloPalabras(p.pagador), monto: p.monto.n });
+// Nombre sugerido para el cliente nuevo: el de quien pagó (si el aviso del banco no trae un nombre real, queda vacío)
+function nombreDePago(p) {
+  const n = tituloPalabras(p.pagador || '');
+  return /^(sin nombre|sin remitente|dep[oó]sito personal pay|recarga )/i.test(n) ? '' : n;
+}
+function nuevoConPago() {
+  const p = S.pagoActual; if (!p) return;
+  S.pagoNuevo = p;
+  hoja.cerrar();
+  $('#nuevoCuerpo').innerHTML = '';
+  cambiarVista('nuevo');
+  renderNuevo();
+  window.scrollTo(0, 0);
+}
 // Buscar el cliente para vincular a mano (ej. paga la mamá)
 function abrirVincularPago() {
   const p = S.pagoActual; if (!p) return;
@@ -2900,6 +2943,9 @@ document.addEventListener('click', e => {
     case 'ver-pago': abrirPago(d.i); break;
     case 'renovar-con-pago': abrirRenovar(d.row, S.pagoActualI); break;
     case 'vincular-pago': abrirVincularPago(); break;
+    case 'nuevo-con-pago': nuevoConPago(); break;
+    case 'usar-nombre-pago': { const n = $('#cNombre'); if (n && S.pagoNuevo) { n.value = nombreDePago(S.pagoNuevo); n.dispatchEvent(new Event('input', { bubbles: true })); n.focus(); } break; }
+    case 'quitar-pago-nuevo': S.pagoNuevo = null; { const q = $('.pago-nuevo'); if (q) q.remove(); } break;
     case 'volver-pago': abrirPago(S.pagoActualI); break;
     case 'elegir-vinculo': opcionesVinculo(d.row); break;
     case 'vinculo-usada': guardarVinculo(d.row, true); break;
