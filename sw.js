@@ -1,6 +1,6 @@
 /* AccountStore: guarda la app en el celular para que abra al instante.
    Los datos de la planilla no pasan por acá (van por la API, con PIN). */
-const VERSION = 'accountstore-v1';
+const VERSION = 'accountstore-v2';
 const APP = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -27,6 +27,13 @@ function redPrimero(req) {
 }
 // Íconos y letras: la copia guardada, y si no está, internet
 const guardadaPrimero = req => guardada(req).then(r => r || fetch(req).then(res => { guardar(req, res.clone()); return res; }));
+// Íconos y manifest propios: la copia guardada al instante, y por detrás se baja la nueva para la próxima vez
+// (así un ícono o manifest cambiado llega solo, sin tener que cambiar VERSION)
+const guardadaYRenovar = (e, req) => guardada(req).then(r => {
+  const nueva = fetch(req).then(res => { guardar(req, res.clone()); return res; });
+  if (r) { e.waitUntil(nueva.catch(() => { })); return r; }
+  return nueva;
+});
 
 self.addEventListener('fetch', e => {
   const req = e.request;
@@ -34,7 +41,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin === location.origin) {
     e.respondWith(req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')
-      ? redPrimero(req) : guardadaPrimero(req));
+      ? redPrimero(req) : guardadaYRenovar(e, req));
   } else if (/fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
     e.respondWith(guardadaPrimero(req));
   }
