@@ -3067,8 +3067,10 @@ async function cargar(forzar = false, silencioso = false) {
     if (forzar && !silencioso) toast('Datos actualizados');
     if (forzar || !S.resumen || Date.now() - (S.resumen.ts || 0) > 10 * 60000) pedirResumen();
 
-    // En segundo plano: la lista de hojas de servicio y los dados de baja
-    api('getServiciosLista', forzar).then(lista => {
+    // En segundo plano: la lista de hojas de servicio y los dados de baja.
+    // La lista no se fuerza al tocar Actualizar: revisar las ~40 hojas tarda casi un minuto y casi nunca cambia
+    // (el servidor la renueva sola cada 24 h; para una hoja nueva al instante, ejecutar probar() en el editor).
+    api('getServiciosLista').then(lista => {
       S.servicios = lista; S.serviciosCargados = true;
       datosLocales.guardar({ servicios: lista });
       if (S.vista === 'cuentas') {
