@@ -382,6 +382,7 @@ main{flex:1}
 .pago-nuevo b{font-weight:600}
 .pago-nuevo small{color:var(--muted)}
 .pago-nuevo .link{padding:6px 2px;flex:none}
+.pago-nuevo span .link{align-self:flex-start;padding:6px 0 0;font-size:.875rem;white-space:normal}
 .aviso-usada{display:flex;align-items:center;gap:10px;background:var(--ok-soft);color:var(--ok-ink);border-radius:var(--r-m);padding:10px 12px;margin:0 0 12px}
 .aviso-usada svg{width:22px;height:22px;flex:none}
 .aviso-usada span{flex:1}
@@ -1873,11 +1874,14 @@ function renderNuevo(exito, conPago) {
     return;
   }
   const pg = S.pagoNuevo;
-  // Cliente nuevo desde Pagos: el nombre, el monto y la fecha salen de la transferencia (se pueden cambiar)
-  const desdePago = pg ? { nombre: nombreDePago(pg), monto: pg.monto.moneda === 'PYG' ? pg.monto.n : '', fecha: pg.dia } : {};
+  // Cliente nuevo desde Pagos: el monto sale de la transferencia; la activación es hoy y el nombre se escribe a mano
+  // (a veces paga otra persona), con un botón para copiar el de quien pagó
+  const desdePago = pg ? { monto: pg.monto.moneda === 'PYG' ? pg.monto.n : '' } : {};
+  const nomPago = pg ? nombreDePago(pg) : '';
   $('#nuevoCuerpo').innerHTML = `${pg ? `<div class="pago-nuevo c-${pg.cuenta.k}"><span><b>Pago de ${esc(tituloPalabras(pg.pagador) || 'sin nombre')}</b>
       <small>${esc(textoMonto(pg.monto))} · ${esc(pg.cuenta.nombre)} · ${esc(dmy(pg.dia).slice(0, 5))} ${esc(pg.hora)}</small>
-      <small>Al guardar, la transferencia queda usada para este cliente.</small></span>
+      <small>Al guardar, la transferencia queda usada para este cliente.</small>
+      ${nomPago ? `<button class="link" type="button" data-accion="usar-nombre-pago">Usar "${esc(nomPago)}" como nombre</button>` : ''}</span>
     <button class="link" type="button" data-accion="quitar-pago-nuevo">Quitar</button></div>` : ''}
   <form class="form" id="fNuevo" novalidate>${camposCliente(desdePago, 'nuevo')}
     <button class="btn btn-pri btn-bloque" type="submit">Guardar cliente</button>
@@ -2940,6 +2944,7 @@ document.addEventListener('click', e => {
     case 'renovar-con-pago': abrirRenovar(d.row, S.pagoActualI); break;
     case 'vincular-pago': abrirVincularPago(); break;
     case 'nuevo-con-pago': nuevoConPago(); break;
+    case 'usar-nombre-pago': { const n = $('#cNombre'); if (n && S.pagoNuevo) { n.value = nombreDePago(S.pagoNuevo); n.dispatchEvent(new Event('input', { bubbles: true })); n.focus(); } break; }
     case 'quitar-pago-nuevo': S.pagoNuevo = null; { const q = $('.pago-nuevo'); if (q) q.remove(); } break;
     case 'volver-pago': abrirPago(S.pagoActualI); break;
     case 'elegir-vinculo': opcionesVinculo(d.row); break;
