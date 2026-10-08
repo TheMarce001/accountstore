@@ -1106,7 +1106,10 @@ function cargarTransferencias(token) {
   } else {
     cache.put('transf_cargando', quien, 120);
     try {
-      const url = CONFIG.TRANSFERENCIAS_URL + (CONFIG.TRANSFERENCIAS_URL.indexOf('?') >= 0 ? '&' : '?') + 'formato=json';
+      // CLAVE_TRANSFERENCIAS: la misma clave guardada en las propiedades de los dos proyectos (así nadie más puede usar el link)
+      const clave = props.getProperty('CLAVE_TRANSFERENCIAS') || '';
+      const url = CONFIG.TRANSFERENCIAS_URL + (CONFIG.TRANSFERENCIAS_URL.indexOf('?') >= 0 ? '&' : '?') + 'formato=json' +
+        (clave ? '&clave=' + encodeURIComponent(clave) : '');
       const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
       const txt = String(resp.getContentText() || '');
       let j = null;
