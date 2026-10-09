@@ -2314,7 +2314,7 @@ async function abrirPassPend(hi, ci) {
     `<form class="form" id="fPassPend" data-h="${hi}" data-c="${ci}"><div class="tarjeta">
       ${camposPassNueva(h.hoja, 'ppNueva', c)}
       <label class="check"><input type="checkbox" name="limpiar" checked> Quitar los "cerrar" de esta cuenta</label>
-    </div><button class="btn btn-pri btn-bloque" type="submit">Guardar contraseña</button>
+    </div><button class="btn btn-pri btn-bloque" type="submit">${conTasker(h.hoja) ? 'Cambiar con Tasker' : 'Guardar contraseña'}</button>
     <button class="btn btn-bloque" type="button" data-accion="volver-pend" style="margin-top:8px">Volver a pendientes</button></form>`);
 }
 async function guardarPassPend(f) {
@@ -2334,7 +2334,7 @@ async function guardarPassPend(f) {
     hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>${tasker ? 'Enviada a Tasker y guardada' : 'Contraseña guardada'}</h2><p>${esc(h.hoja)}, ${esc(c.nombre || c.plan)}. ${tasker && data.nueva ? `Contraseña nueva: <b>${esc(data.nueva)}</b>. ` : ''}${tasker ? 'Fijate en el celular que Tasker termine el cambio. ' : ''}Avisá a los clientes de esta cuenta.</p>
       <div class="pila">${c.aviso ? `<button class="btn btn-pri" data-accion="copiar-txt" data-t="${esc(c.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
       <button class="btn" data-accion="volver-pend">Volver a pendientes</button></div></div>`);
-  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar contraseña'; }
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = tasker ? 'Cambiar con Tasker' : 'Guardar contraseña'; }
 }
 
 /* ================================================================
@@ -2613,7 +2613,7 @@ function abrirCambiarPass(i) {
     `<form class="form" id="fPass" data-i="${i}"><div class="tarjeta">
       ${camposPassNueva(S.hojaSel, 'pNueva', c)}
       ${c.slots.some(sl => sl.cerrar) ? '<label class="check"><input type="checkbox" name="limpiar" checked> Quitar los "cerrar" de esta cuenta</label>' : ''}
-    </div><button class="btn btn-pri btn-bloque" type="submit">Guardar contraseña</button></form>`);
+    </div><button class="btn btn-pri btn-bloque" type="submit">${conTasker(S.hojaSel) ? 'Cambiar con Tasker' : 'Guardar contraseña'}</button></form>`);
 }
 async function guardarPass(f) {
   const c = cuentaSel(f.dataset.i);
@@ -2630,7 +2630,7 @@ async function guardarPass(f) {
     hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>${tasker ? 'Enviada a Tasker y guardada' : 'Contraseña guardada'}</h2><p>${tasker && data.nueva ? `Contraseña nueva: <b>${esc(data.nueva)}</b><br>` : ''}${tasker ? 'Fijate en el celular que Tasker termine el cambio. ' : ''}Avisá a los clientes de esta cuenta.</p>
       <div class="pila">${nc && nc.aviso ? `<button class="btn btn-pri" data-accion="copiar-txt" data-t="${esc(nc.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
       <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
-  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = 'Guardar contraseña'; }
+  } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = tasker ? 'Cambiar con Tasker' : 'Guardar contraseña'; }
 }
 async function irALugar(h, fila) {
   hoja.cerrar();
@@ -3054,7 +3054,12 @@ document.addEventListener('click', e => {
     case 'asignar-cliente': empezarAsignar(d.row); break;
     case 'cancelar-asignar': S.asignando = null; S.fCuentas = 'todas'; renderCuentas(); break;
     case 'copiar-txt': copiar(d.t); break;
-    case 'toggle-tasker': el.closest('form').querySelectorAll('[data-pass-manual]').forEach(m => { m.hidden = el.checked; }); break;
+    case 'toggle-tasker': {
+      const f = el.closest('form');
+      f.querySelectorAll('[data-pass-manual]').forEach(m => { m.hidden = el.checked; });
+      f.querySelector('[type=submit]').textContent = el.checked ? 'Cambiar con Tasker' : 'Guardar contraseña';
+      break;
+    }
     case 'generar-pass': { const i = el.closest('.campo').querySelector('input'); i.value = generarPassCuenta(d.h); break; }
     case 'copiar-pass-nueva': copiar(el.closest('.campo').querySelector('input').value); break;
     case 'ver-pass-cli': { const sp = el.querySelector('[data-pass]'); sp.textContent = sp.textContent === d.t ? '••••••••' : d.t; break; }
