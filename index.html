@@ -395,6 +395,9 @@ main{flex:1}
 .usada-pill{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;color:var(--ok-ink);margin-top:2px}
 .usada-pill svg{width:14px;height:14px}
 .envio-lista{margin:0 0 6px;padding-left:20px;line-height:1.7}
+.envio-grupo{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.envio-check{padding:6px 2px}
+.envio-check small{color:var(--muted)}
 .envio-lista small{color:var(--muted)}
 .pass-acc{display:flex;gap:18px}
 .pass-acc .link{padding:6px 0 0;font-size:.875rem}
@@ -2635,8 +2638,7 @@ async function guardarPass(f) {
     mezclarServicio(h, data); renderCuentas(); S.resumenViejo = true;
     const nc = data.cuentas.find(x => x.header === header);
     hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>${tasker ? 'Enviada a Tasker y guardada' : 'Contraseña guardada'}</h2><p>${tasker && data.nueva ? `Contraseña nueva: <b>${esc(data.nueva)}</b><br>` : ''}${tasker ? 'Fijate en el celular que Tasker termine el cambio. ' : ''}Avisá a los clientes de esta cuenta.</p>
-      <div class="pila">${tasker && S.reglas.envio ? `<button class="btn btn-pri" data-accion="envio-pass" data-h="${esc(h)}" data-row="${c.infoRow}" data-n="${esc(c.nombre || c.plan || '')}">${ICON.wa}Enviar la nueva a los clientes</button>` : ''}
-      ${nc && nc.aviso ? `<button class="btn${tasker && S.reglas.envio ? '' : ' btn-pri'}" data-accion="copiar-txt" data-t="${esc(nc.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
+      <div class="pila">${nc && nc.aviso ? `<button class="btn btn-pri" data-accion="copiar-txt" data-t="${esc(nc.aviso)}">${ICON.copiar}Copiar aviso de cambio</button>` : ''}
       <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
   } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = tasker ? 'Cambiar con Tasker' : 'Guardar contraseña'; }
 }
@@ -2647,22 +2649,37 @@ async function abrirEnvioPass(hojaNom, row, nombre) {
   try {
     const r = await api('previaEnvioPass', hojaNom, Number(row));
     const lista = (titulo, items, fmt) => items.length ? `<h3 class="sub-tit">${titulo} (${items.length})</h3><ul class="envio-lista">${items.map(x => `<li>${fmt(x)}</li>`).join('')}</ul>` : '';
+    // cada cliente con su casilla: los que se envían vienen marcados; los pendientes, sin marcar (si lo marcás, va igual)
+    const casilla = (x, marcado, extra) => `<label class="check envio-check"><input type="checkbox" name="envio" value="${Number(x.fila)}" ${marcado ? 'checked' : ''} data-accion="envio-cuenta"> <span>${esc(x.nombre)}${extra || ''}</span></label>`;
+    const grupo = (titulo, ayuda, items, marcado, extra) => items.length ? `<h3 class="sub-tit">${titulo} (${items.length})</h3>${ayuda ? `<p class="ayuda" style="margin:-4px 2px 6px">${ayuda}</p>` : ''}<div class="envio-grupo">${items.map(x => casilla(x, marcado, extra && extra(x))).join('')}</div>` : '';
     hoja.cambiar(cabHoja('Enviar contraseña', esc(`${hojaNom}, ${nombre}`)) + `
       <dl class="datos"><div><dt>Servicio</dt><dd>${esc(r.hoja || hojaNom)}</dd></div><div><dt>Correo</dt><dd>${esc(r.correo)}</dd></div><div><dt>Contraseña</dt><dd><b>${esc(r.pass)}</b></dd></div></dl>
-      ${lista('Se envía a', r.envian || [], n => esc(n))}
-      ${lista('Quedan pendientes hasta que renueven', r.pendientes || [], x => `${esc(x.nombre)} <small>(${x.dias} ${Math.abs(x.dias) === 1 ? 'día' : 'días'})</small>`)}
+      <form id="fEnvio">
+      ${grupo('Se envía a', 'Desmarcá a quien no quieras mandársela.', r.envian || [], true)}
+      ${grupo('Pendientes hasta que renueven', 'Les llega sola cuando renueven. Marcalos si querés mandársela ya.', r.pendientes || [], false, x => ` <small>(${x.dias} ${Math.abs(x.dias) === 1 ? 'día' : 'días'})</small>`)}
+      </form>
       ${lista('Teléfono inválido, no se envía', r.invalidos || [], n => esc(n))}
       ${!(r.envian || []).length && !(r.pendientes || []).length ? '<p class="ayuda">No hay clientes para enviar en esta cuenta.</p>' : ''}
       <div class="pila" style="margin-top:14px">
-        ${(r.envian || []).length || (r.pendientes || []).length ? `<button class="btn btn-pri" data-accion="envio-confirmar">${ICON.wa}Enviar${(r.envian || []).length ? ' a ' + r.envian.length + ' ' + plural(r.envian.length, 'cliente', 'clientes') : ''}</button>` : ''}
+        ${(r.envian || []).length || (r.pendientes || []).length ? `<button class="btn btn-pri" id="btnEnvio" data-accion="envio-confirmar">${ICON.wa}<span></span></button>` : ''}
         <button class="btn" data-accion="cerrar">Cancelar</button></div>`);
+    contarEnvio();
   } catch (e) { hoja.cambiar(cabHoja('Enviar contraseña', esc(`${hojaNom}, ${nombre}`)) + `<div class="vacio"><strong>No se pudo revisar</strong>${esc(msgError(e))}</div><button class="btn" data-accion="cerrar">Cerrar</button>`); }
+}
+// El botón dice a cuántos se va a enviar según las casillas marcadas
+function contarEnvio() {
+  const b = $('#btnEnvio'); if (!b) return;
+  const n = document.querySelectorAll('#fEnvio input[name=envio]:checked').length;
+  b.querySelector('span').textContent = n ? `Enviar a ${n} ${plural(n, 'cliente', 'clientes')}` : 'Marcá al menos un cliente';
+  b.disabled = !n;
 }
 async function confirmarEnvioPass(b) {
   const x = S.envioCtx; if (!x) return;
+  const filas = [...document.querySelectorAll('#fEnvio input[name=envio]:checked')].map(i => Number(i.value));
+  if (!filas.length) return toast('Marcá al menos un cliente.', true);
   b.disabled = true; b.textContent = 'Enviando…';
   try {
-    const r = await api('enviarPassClientes', x.hoja, x.row);
+    const r = await api('enviarPassClientes', x.hoja, x.row, filas);
     const pend = r.pendientes || [], fall = r.fallidos || [], inv = r.invalidos || [];
     hoja.cambiar(`<div class="exito"><div class="marca">${r.duplicado || fall.length ? ICON.alerta : ICON.ok}</div>
       <h2>${r.duplicado ? 'Ya se había enviado' : 'Enviada a ' + (r.enviados || 0) + ' ' + plural(r.enviados || 0, 'cliente', 'clientes')}</h2>
@@ -3097,6 +3114,7 @@ document.addEventListener('click', e => {
     case 'copiar-txt': copiar(d.t); break;
     case 'envio-pass': abrirEnvioPass(d.h, d.row, d.n); break;
     case 'envio-confirmar': confirmarEnvioPass(el); break;
+    case 'envio-cuenta': contarEnvio(); break;
     case 'toggle-tasker': {
       const f = el.closest('form');
       f.querySelectorAll('[data-pass-manual]').forEach(m => { m.hidden = el.checked; });
