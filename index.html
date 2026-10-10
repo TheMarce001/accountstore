@@ -198,7 +198,13 @@ main{flex:1}
 .lugar-acc{font-size:.8125rem;font-weight:600;color:var(--primary-texto)}
 .mini{flex:none;font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:6px;font-variant-numeric:tabular-nums}
 .alerta{font-style:normal;font-size:.75rem;color:var(--venc);font-weight:600;margin-left:6px}
-.cuenta-pie{display:flex;flex-wrap:wrap;gap:0 16px;border-top:1px solid var(--line)}
+.cuenta-pie{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;border-top:1px solid var(--line);padding-top:12px}
+/* Acciones de la cuenta: cada una con su ícono y su color, para no confundirlas */
+.acc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:64px;padding:8px 6px;border-radius:var(--r-m);border:1px solid transparent;font-size:.8125rem;font-weight:600;line-height:1.2;text-align:center}
+.acc svg{width:20px;height:20px}
+.acc-aviso{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
+.acc-pass{background:var(--primary-soft);color:var(--primary-texto)}
+.acc-envio{background:var(--ok-soft);color:var(--ok-ink)}
 .cuenta-pie:empty{display:none}
 .pill.inactiva{background:var(--baja-soft);color:var(--baja-ink)}
 .cuenta.inactiva{opacity:.8}
@@ -2279,7 +2285,7 @@ function renderPendientes() {
         <header class="cuenta-cab"><div><h3>${esc(c.nombre || c.plan || 'Grupo')}</h3><p>${esc([c.nombre ? c.plan : '', c.correo].filter(Boolean).join(', '))}</p></div>
           <div class="pills">${tieneCerrar ? '<span class="pill cerrar">Cerrar</span>' : ''}</div></header>
         <ul class="lugares">${filas}</ul>
-        <footer class="cuenta-pie">${tieneCerrar && c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="link" data-accion="pend-pass" data-h="${hi}" data-c="${ci}">Cambiar contraseña</button>` : ''}${c.aviso ? `<button class="link" data-accion="copiar-txt" data-t="${esc(c.aviso)}">Copiar aviso</button>` : ''}</footer>
+        <footer class="cuenta-pie">${tieneCerrar && c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="acc acc-pass" data-accion="pend-pass" data-h="${hi}" data-c="${ci}">${ICON.llave}Cambiar contraseña</button>` : ''}${c.aviso ? `<button class="acc acc-aviso" data-accion="copiar-txt" data-t="${esc(c.aviso)}">${ICON.copiar}Copiar aviso</button>` : ''}</footer>
       </article>`;
     }).join('');
     if (!cuentas) return '';
@@ -2453,7 +2459,7 @@ function tarjetaCuenta(c, i) {
     <header class="cuenta-cab"><div><h3>${esc(titulo)}</h3>${sub ? `<p>${esc(sub)}</p>` : ''}</div><div class="pills">${pills.join('')}</div></header>
     ${cred}${meta ? `<p class="cuenta-meta">${meta}</p>` : ''}
     ${c.slots.length ? `<ul class="lugares">${c.slots.map((s, j) => lugarHTML(s, i, j, c.inactiva)).join('')}</ul>` : ''}
-    <footer class="cuenta-pie">${c.aviso ? `<button class="link" data-accion="copiar-cuenta" data-v="aviso" data-i="${i}">Copiar aviso</button>` : ''}${c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="link" data-accion="cambiar-pass" data-i="${i}">Cambiar contraseña</button>` : ''}${S.reglas.envio && c.correo && c.infoRow && puede('cambiarPass') ? `<button class="link" data-accion="envio-pass" data-h="${esc(S.hojaSel)}" data-row="${c.infoRow}" data-n="${esc(c.nombre || c.plan || '')}">Enviar a clientes</button>` : ''}</footer>
+    <footer class="cuenta-pie">${c.aviso ? `<button class="acc acc-aviso" data-accion="copiar-cuenta" data-v="aviso" data-i="${i}">${ICON.copiar}Copiar aviso</button>` : ''}${c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="acc acc-pass" data-accion="cambiar-pass" data-i="${i}">${ICON.llave}Cambiar contraseña</button>` : ''}${S.reglas.envio && c.correo && c.infoRow && puede('cambiarPass') ? `<button class="acc acc-envio" data-accion="envio-pass" data-h="${esc(S.hojaSel)}" data-row="${c.infoRow}" data-n="${esc(c.nombre || c.plan || '')}">${ICON.wa}Enviar contraseñas</button>` : ''}</footer>
   </article>`;
 }
 function lugarHTML(s, i, j, inactiva = false) {
@@ -2645,14 +2651,14 @@ async function guardarPass(f) {
 /* Enviar la contraseña de una cuenta a sus clientes (lo hace el script de la planilla, como su menú "Enviar contraseñas") */
 async function abrirEnvioPass(hojaNom, row, nombre) {
   S.envioCtx = { hoja: hojaNom, row: Number(row), nombre };
-  hoja.abrir(cabHoja('Enviar contraseña', esc(`${hojaNom}, ${nombre}`)) + '<div class="vacio">Revisando a quién se envía…</div>');
+  hoja.abrir(cabHoja('Enviar contraseñas', esc(`${hojaNom}, ${nombre}`)) + '<div class="vacio">Revisando a quién se envía…</div>');
   try {
     const r = await api('previaEnvioPass', hojaNom, Number(row));
     const lista = (titulo, items, fmt) => items.length ? `<h3 class="sub-tit">${titulo} (${items.length})</h3><ul class="envio-lista">${items.map(x => `<li>${fmt(x)}</li>`).join('')}</ul>` : '';
     // cada cliente con su casilla: los que se envían vienen marcados; los pendientes, sin marcar (si lo marcás, va igual)
     const casilla = (x, marcado, extra) => `<label class="check envio-check"><input type="checkbox" name="envio" value="${Number(x.fila)}" ${marcado ? 'checked' : ''} data-accion="envio-cuenta"> <span>${esc(x.nombre)}${extra || ''}</span></label>`;
     const grupo = (titulo, ayuda, items, marcado, extra) => items.length ? `<h3 class="sub-tit">${titulo} (${items.length})</h3>${ayuda ? `<p class="ayuda" style="margin:-4px 2px 6px">${ayuda}</p>` : ''}<div class="envio-grupo">${items.map(x => casilla(x, marcado, extra && extra(x))).join('')}</div>` : '';
-    hoja.cambiar(cabHoja('Enviar contraseña', esc(`${hojaNom}, ${nombre}`)) + `
+    hoja.cambiar(cabHoja('Enviar contraseñas', esc(`${hojaNom}, ${nombre}`)) + `
       <dl class="datos"><div><dt>Servicio</dt><dd>${esc(r.hoja || hojaNom)}</dd></div><div><dt>Correo</dt><dd>${esc(r.correo)}</dd></div><div><dt>Contraseña</dt><dd><b>${esc(r.pass)}</b></dd></div></dl>
       <form id="fEnvio">
       ${grupo('Se envía a', 'Desmarcá a quien no quieras mandársela.', r.envian || [], true)}
@@ -2664,7 +2670,7 @@ async function abrirEnvioPass(hojaNom, row, nombre) {
         ${(r.envian || []).length || (r.pendientes || []).length ? `<button class="btn btn-pri" id="btnEnvio" data-accion="envio-confirmar">${ICON.wa}<span></span></button>` : ''}
         <button class="btn" data-accion="cerrar">Cancelar</button></div>`);
     contarEnvio();
-  } catch (e) { hoja.cambiar(cabHoja('Enviar contraseña', esc(`${hojaNom}, ${nombre}`)) + `<div class="vacio"><strong>No se pudo revisar</strong>${esc(msgError(e))}</div><button class="btn" data-accion="cerrar">Cerrar</button>`); }
+  } catch (e) { hoja.cambiar(cabHoja('Enviar contraseñas', esc(`${hojaNom}, ${nombre}`)) + `<div class="vacio"><strong>No se pudo revisar</strong>${esc(msgError(e))}</div><button class="btn" data-accion="cerrar">Cerrar</button>`); }
 }
 // El botón dice a cuántos se va a enviar según las casillas marcadas
 function contarEnvio() {
