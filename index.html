@@ -1145,6 +1145,12 @@ async function abrirTiempos() {
   const seg = ms => (ms / 1000).toLocaleString('es-PY', { maximumFractionDigits: 1 }) + ' s';
   const esperas = esperasApp.leer();
   const hora = t => new Date(t).toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // Texto para "Copiar todo" (se arma con lo que ya se leyó: no pide nada al servidor)
+  S.tiemposTxt = (lista || []).map(x => [
+    `${NOMBRES_TIEMPO[x.fn] || x.fn}: ${seg(x.ms)}` + (x.id && esperas[x.id] != null ? ` (en el celular ${seg(esperas[x.id])})` : ''),
+    `${hora(x.t)}${x.u ? ' · ' + nombreCorto(x.u) : ''}${x.ok ? '' : ' · ERROR'}`,
+    ...(x.error ? [x.error] : []), ...(x.lineas || [])
+  ].join('\n')).join('\n\n');
   const filas = (lista || []).map(x => `<div class="tiempo${x.ms >= 15000 ? ' lento' : ''}">
       <div class="tiempo-cab"><b>${esc(NOMBRES_TIEMPO[x.fn] || x.fn)}</b><span>${seg(x.ms)}</span></div>
       ${x.id && esperas[x.id] != null ? `<div class="tiempo-cel">En el celular: <b>${seg(esperas[x.id])}</b> (internet y Google: ${seg(Math.max(0, esperas[x.id] - x.ms))})</div>` : ''}
@@ -1153,7 +1159,8 @@ async function abrirTiempos() {
       ${(x.lineas || []).map(l => `<div class="tiempo-det">${esc(l)}</div>`).join('')}</div>`).join('');
   hoja.cambiar(cab + (filas ? `<div class="tiempos">${filas}</div>
       <p class="ayuda" style="margin:10px 4px 14px">El número grande es lo que tardó el servidor. "En el celular" es lo que esperaste vos en este celular (aparece en los pedidos hechos desde acá). En rojo, lo que pasó de 15 s.</p>
-      <button class="btn" data-accion="menu-tiempos">${ICON.actualizar}Volver a leer</button>`
+      <div class="pila"><button class="btn btn-pri" data-accion="copiar-tiempos">${ICON.copiar}Copiar todo</button>
+      <button class="btn" data-accion="menu-tiempos">${ICON.actualizar}Volver a leer</button></div>`
     : `<p class="vacio"><strong>Todavía no hay nada</strong>Usá la app (por ejemplo renová un cliente) y volvé a mirar.</p>`));
 }
 async function cambiarHuella(chk) {
@@ -3512,6 +3519,7 @@ document.addEventListener('click', e => {
     case 'cerrar-sesion': hoja.cerrar(); setTimeout(cerrarSesion, 230); break;
     case 'menu-actualizar': hoja.cerrar(); cargar(true); break;
     case 'menu-tiempos': abrirTiempos(); break;
+    case 'copiar-tiempos': copiar(S.tiemposTxt || ''); break;
     case 'huella-desbloquear': desbloquearConHuella(); break;
     case 'huella-pin': $('#bloqueo').hidden = true; mostrarLogin('Entrá con tu PIN para desbloquear.'); break;
     case 'ir-venc': S.filtroVenc = d.f; renderVenc(); document.getElementById('chipsVenc').scrollIntoView({ block: 'start', behavior: 'smooth' }); break;
