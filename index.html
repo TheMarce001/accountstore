@@ -616,23 +616,31 @@ main{flex:1}
   #listaCuentas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
   #listaCuentas>.cuenta{margin-bottom:0}
   #listaCuentas>:not(.cuenta){grid-column:1/-1}
-  /* Pagos: a la izquierda los totales, el botón y el buscador (quedan fijos); a la derecha la lista */
-  #v-pagos.activa{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:28px;align-items:start}
-  .pagos-lado{position:sticky;top:calc(var(--top-h,66px) + 8px)}
-  .pagos-lado .buscador{position:static;padding:0}
-  #pagosCuerpo{max-width:980px}
-  #pagosCuerpo>.chips:first-child{padding-top:0}
-  #pagosArriba .stats.tres{grid-template-columns:1fr}
-  #pagosArriba .stat{flex-direction:row;justify-content:space-between;padding:14px 18px;text-align:left}
-  #pagosArriba .stat b{font-size:1.25rem;order:2}
-  #pagosArriba .stat span{display:block;min-height:0;line-height:1.4}
-  #pagosArriba .stats.tres .stat+.stat::before{left:16px;right:16px;top:0;bottom:auto;width:auto;height:1px}
-  /* Nuevo cliente: datos del cliente y del cobro a la izquierda, servicios a la derecha */
-  #v-nuevo>*{max-width:1240px}
-  #fNuevo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}
-  #fNuevo>.tarjeta:nth-of-type(2){grid-column:2;grid-row:1/span 4}
-  #fNuevo>.tarjeta{margin-bottom:12px}
-  #fNuevo>.btn{grid-column:1}
+  #v-pagos>*,#v-nuevo>*{max-width:1240px}
+  /* Pagos: totales y botón en una fila; la lista como tabla de movimientos */
+  #pagosArriba{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;align-items:stretch;margin-bottom:4px}
+  #pagosArriba .resumen-dia{margin:0}
+  #pagosArriba .pagos-accion{justify-content:center;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:14px}
+  .pagos-tabla{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);overflow:hidden;margin-top:6px}
+  .pago-t,.pago-t-cab{display:grid;grid-template-columns:64px minmax(200px,1.6fr) 120px minmax(120px,1fr) minmax(150px,1fr) 130px;gap:14px;align-items:center;padding:10px 18px;width:100%;border:0;background:none;text-align:left;color:inherit;border-top:1px solid var(--line)}
+  .pago-t-cab{font-size:.6875rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;background:var(--surface-2);border-top:0}
+  .pago-t:hover{background:var(--surface-2)}
+  .pago-t .hora,.pago-t .monto{font-variant-numeric:tabular-nums}
+  .pago-t .hora{color:var(--muted);font-size:.875rem}
+  .pago-t b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pago-t .banco{color:var(--muted);font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pago-t .monto{text-align:right;font-weight:700}
+  .pago-t .sinusar{font-size:.8125rem;color:var(--muted)}
+  .pago-t .usada-pill{margin:0}
+  .pago-t-dia{display:flex;justify-content:space-between;padding:12px 18px 8px;font-weight:700;font-size:.875rem;border-top:1px solid var(--line);background:var(--paper)}
+  .pago-t-dia:first-child{border-top:0}
+  .pago-t-dia span{color:var(--muted);font-weight:500}
+  /* Nuevo cliente: el formulario por pasos y, al costado, un resumen que se va completando con el botón de guardar */
+  #v-nuevo .nuevo-wrap{display:grid;grid-template-columns:minmax(0,760px) 340px;gap:24px;align-items:start}
+  #fNuevo{counter-reset:paso}
+  #fNuevo>.tarjeta[data-paso]::before{counter-increment:paso;content:counter(paso) "  " attr(data-paso);display:block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--primary-texto);margin-bottom:10px}
+  #fNuevo>.btn{display:none}
+  .nuevo-res{display:block!important;position:sticky;top:calc(var(--top-h,66px) + 8px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:18px}
   .hoja{justify-content:flex-end;align-items:stretch}
   .hoja-panel{max-width:560px;max-height:none;height:100dvh;border-radius:var(--r-l) 0 0 var(--r-l);transform:translateX(100%);padding:18px 24px 24px}
   .asa{display:none}
@@ -647,6 +655,15 @@ main{flex:1}
 }
 /* PC: contenido pegado al menú (sin hueco en pantallas anchas), días en color suave y acciones tenues hasta pasar el mouse */
 .modo-venc{display:none}
+.nuevo-res{display:none}
+.nuevo-res h3{margin:0 0 12px;font-size:1rem}
+.nuevo-res dl{margin:0 0 14px;display:grid;grid-template-columns:96px 1fr;gap:8px 10px;font-size:.875rem}
+.nuevo-res dt{color:var(--muted)}
+.nuevo-res dd{margin:0;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.nuevo-res dd.vacio-r{color:var(--muted);font-weight:400}
+.nuevo-res .falta{font-size:.8125rem;color:var(--pronto-ink);background:var(--pronto-soft);border-radius:var(--r-s);padding:8px 10px;margin:0 0 12px}
+.nuevo-res .listo{font-size:.8125rem;color:var(--ok-ink);background:var(--ok-soft);border-radius:var(--r-s);padding:8px 10px;margin:0 0 12px}
+.nuevo-res .btn{width:100%;margin-top:8px}
 @media (min-width:1024px){
   .top,.vista{max-width:1640px;margin-left:0;margin-right:0}
   .dias.t-vencido{background:color-mix(in srgb,var(--venc) 16%,transparent);color:var(--venc)}
@@ -2326,7 +2343,7 @@ function camposCliente(c = {}, modo = 'editar') {
   const oblig = nuevo || react ? '<span class="req" aria-label="obligatorio">*</span>' : '';
   const ids = topValores('id', 15), disp = topValores('dispositivos', 12), servs = catalogoServicios();
   return `
-  <div class="tarjeta">
+  <div class="tarjeta" data-paso="Cliente">
     <div class="campo"><label for="cNombre">Nombre y apellido${oblig}</label>
       <input id="cNombre" name="nombre" value="${v('nombre')}" autocomplete="off" required>
       ${nuevo ? '<div id="cExiste"></div>' : ''}
@@ -2336,7 +2353,7 @@ function camposCliente(c = {}, modo = 'editar') {
     <div class="campo"><label for="cTel">Teléfono${oblig}</label>
       <input id="cTel" name="telefono" type="tel" inputmode="tel" value="${v('tel')}" placeholder="0981 123456" required></div>
   </div>
-  <div class="tarjeta">
+  <div class="tarjeta" data-paso="Servicio">
     ${campoServicios(c, oblig)}
     <div class="campo"><label for="cId">ID${oblig}</label><input id="cId" name="idc" list="lIds" value="${v('id')}" autocomplete="off"></div>
     <div class="campo"><label for="cDisp">Dispositivos</label><input id="cDisp" name="dispositivos" list="lDisp" value="${v('dispositivos')}" autocomplete="off"><span class="ayuda regla" id="cDispAyuda"></span></div>
@@ -2349,7 +2366,7 @@ function camposCliente(c = {}, modo = 'editar') {
     <datalist id="lIds">${ids.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
     <datalist id="lDisp">${disp.map(x => `<option value="${esc(x)}">`).join('')}</datalist>
   </div>
-  <div class="tarjeta">
+  <div class="tarjeta" data-paso="Fecha y monto">
     <div class="dos">
       <div class="campo"><label for="cFecha">Activación${oblig}</label><input id="cFecha" name="fecha" type="date" value="${react ? S.hoy : pISO(c.fecha) ? c.fecha : (nuevo ? S.hoy : '')}" ${baja ? 'disabled' : ''}></div>
       <div class="campo"><label for="cMeses">Meses${oblig}</label><input id="cMeses" name="meses" inputmode="numeric" value="${react ? '1' : c.meses !== undefined && c.meses !== '' ? v('meses') : '1'}"></div>
@@ -2558,15 +2575,36 @@ function renderNuevo(exito, conPago) {
       <small>Al guardar, la transferencia queda usada para este cliente.</small>
       ${nomPago ? `<button class="link" type="button" data-accion="usar-nombre-pago">Usar "${esc(nomPago)}" como nombre</button>` : ''}</span>
     <button class="link" type="button" data-accion="quitar-pago-nuevo">Quitar</button></div>` : ''}
-  <form class="form" id="fNuevo" novalidate>${camposCliente(desdePago, 'nuevo')}
-    ${pg ? '' : `<div class="tarjeta">${htmlPago('n')}</div>`}
+  <div class="nuevo-wrap"><form class="form" id="fNuevo" novalidate>${camposCliente(desdePago, 'nuevo')}
+    ${pg ? '' : `<div class="tarjeta" data-paso="Pago">${htmlPago('n')}</div>`}
     <button class="btn btn-pri btn-bloque" type="submit">Guardar cliente</button>
-    <button class="btn btn-bloque btn-suave" type="button" data-accion="limpiar-nuevo">${ICON.borrar}Limpiar formulario</button></form>`;
+    <button class="btn btn-bloque btn-suave" type="button" data-accion="limpiar-nuevo">${ICON.borrar}Limpiar formulario</button></form>
+    <aside class="nuevo-res" id="nuevoRes" aria-live="polite"></aside></div>`;
   renderServicios($('#fNuevo'));
   previaForm($('#fNuevo'));
   requestAnimationFrame(() => plegarSugs($('#nuevoCuerpo')));
   if (!pg) pagosParaRenovar(null, $('#fNuevo'));
+  resumenNuevo();
 }
+// PC: resumen al costado del formulario de cliente nuevo, con lo que falta y el botón de guardar
+function resumenNuevo() {
+  const f = $('#fNuevo'), box = $('#nuevoRes'); if (!f || !box) return;
+  const val = n => f[n] ? String(f[n].value || '').trim() : '';
+  const fila = (k, v) => `<dt>${k}</dt><dd class="${v ? '' : 'vacio-r'}">${v || '—'}</dd>`;
+  const m = Number(val('meses')) || 0, fe = val('fecha');
+  const pg = S.pagoNuevo, el = f.pago ? f.pago.value : '';
+  const pagoTxt = pg ? `${esc(textoMonto(pg.monto))} · ${esc(tituloPalabras(pg.pagador))}` : el === 'otro' ? 'Otro medio de pago' : el && S.pagos && S.pagos[Number(el)] ? `${esc(textoMonto(S.pagos[Number(el)].monto))} · ${esc(tituloPalabras(S.pagos[Number(el)].pagador))}` : '';
+  const falta = [['nombre', 'nombre'], ['telefono', 'teléfono'], ['servicios', 'servicios'], ['idc', 'ID'], ['monto', 'monto']].filter(([k]) => !val(k)).map(([, l]) => l);
+  if (!pg && !el) falta.push('cómo pagó');
+  box.innerHTML = `<h3>Resumen</h3><dl>
+    ${fila('Nombre', esc(val('nombre')))}${fila('Teléfono', esc(val('telefono')))}${fila('Servicios', esc(val('servicios')))}
+    ${fila('Activación', pISO(fe) ? dmy(fe) : '')}${fila('Vence', pISO(fe) && m > 0 ? `<span class="num">${dmy(sumarMeses(fe, m))}</span> · ${m} ${plural(m, 'mes', 'meses')}` : '')}
+    ${fila('Monto', digitos(val('monto')) ? 'Gs. ' + miles(Number(digitos(val('monto')))) : '')}${fila('Pago', pagoTxt)}</dl>
+    ${falta.length ? `<p class="falta">Falta: ${falta.join(', ')}</p>` : '<p class="listo">Todo listo para guardar</p>'}
+    <button class="btn btn-pri" type="submit" form="fNuevo">Guardar cliente</button>
+    <button class="btn btn-suave" type="button" data-accion="limpiar-nuevo">${ICON.borrar}Limpiar</button>`;
+}
+['input', 'change', 'click'].forEach(ev => document.addEventListener(ev, e => { if (e.target.closest && e.target.closest('#fNuevo')) requestAnimationFrame(resumenNuevo); }));
 function previaForm(f) {
   const box = f && f.querySelector('#cPrevia'); if (!box) return;
   const m = Number(f.meses.value) || 0;
@@ -3616,6 +3654,20 @@ function renderListaPagos() {
     ? `<div class="vacio"><strong>Ninguna transferencia con “${esc(S.qPagos.trim())}”</strong>Busca entre las ${S.pagos.length} guardadas en la planilla.</div>`
     : '<div class="vacio"><strong>Sin transferencias</strong>Tocá "Cargar transferencias" para traer las nuevas.</div>';
   if (f === 'otros') { box.innerHTML = `<div class="chips" role="group" aria-label="Filtrar por cuenta">${chips}</div>${renderOtrosPagos(q)}`; return; }
+  if (CON_MOUSE.matches && innerWidth >= 1024 && grupos.length) {
+    const filas = grupos.map(g => {
+      const total = g.items.reduce((a, p) => a + (p.monto.moneda === 'PYG' ? p.monto.n : 0), 0);
+      return `<div class="pago-t-dia">${etiquetaDia(g.dia, hoy)}<span>Gs. ${miles(total)} · ${g.items.length} ${plural(g.items.length, 'pago', 'pagos')}</span></div>` + g.items.map(p => {
+        const u = usoDe(p), banco = p.extra ? p.extra.replace(/^comprobante\s*/i, 'Comp. ') : p.entidad ? bancoPagador(p.entidad) : '';
+        return `<button class="pago-t" data-accion="ver-pago" data-i="${S.pagos.indexOf(p)}"><span class="hora">${esc(p.hora)}</span><b>${esc(tituloPalabras(p.pagador) || 'Sin nombre')}</b>
+          <span class="c-${p.cuenta.k}"><span class="cta-pill">${esc(p.cuenta.nombre)}</span></span><span class="banco">${esc(banco)}</span>
+          <span>${u ? `<span class="usada-pill">${ICON.ok}${esc(nombreCorto2(u.cliente))}</span>` : '<span class="sinusar">Sin usar</span>'}</span>
+          <span class="monto">${esc(textoMonto(p.monto))}</span></button>`;
+      }).join('');
+    }).join('');
+    box.innerHTML = `<div class="chips" role="group" aria-label="Filtrar por cuenta">${chips}</div><div class="pagos-tabla"><div class="pago-t-cab"><span>Hora</span><span>Pagador</span><span>Cuenta</span><span>Banco</span><span>Estado</span><span style="text-align:right">Monto</span></div>${filas}</div>`;
+    return;
+  }
   box.innerHTML = `<div class="chips" role="group" aria-label="Filtrar por cuenta">${chips}</div>${cuerpo || vacio}`;
   if (S.vista === 'pagos' && q) { const x = { n: base.length, t: base.reduce((a, p) => a + (p.monto.moneda === 'PYG' ? p.monto.n : 0), 0) }; $('#subtitulo').textContent = `${x.n} ${plural(x.n, 'transferencia coincide', 'transferencias coinciden')}, Gs. ${miles(x.t)}`; }
 }
