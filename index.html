@@ -625,6 +625,7 @@ main{flex:1}
   #listaCuentas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
   #listaCuentas>.cuenta{margin-bottom:0}
   #listaCuentas>:not(.cuenta){grid-column:1/-1}
+  #listaCuentas>.cuenta-grupo{margin-bottom:0}
   #listaCuentas.mosaico{display:block}
   .mos{display:flex;gap:12px;align-items:flex-start}
   .mos-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
@@ -678,6 +679,12 @@ main{flex:1}
 .cb-dentro svg,.cb-dentro>div>b{color:var(--ok-ink)}
 .cb-sug p{margin:2px 0 0;font-size:.875rem;color:var(--ink)}
 .cb-cuenta{display:inline-block;margin-top:6px;font-size:.8125rem;color:var(--muted);font-variant-numeric:tabular-nums}
+/* Cuenta + sus MIEMBRO EXTRA: una sola tarjeta con secciones */
+.cuenta-grupo{margin-bottom:10px;border-radius:var(--r-l);overflow:hidden}
+.cuenta-grupo>.cuenta{margin:0;border-radius:0}
+.cuenta-grupo>.cuenta.extra{border-top:1px dashed var(--line);padding-top:10px}
+.cuenta-grupo>.cuenta.extra .cuenta-cab h3{font-size:.9375rem;color:var(--muted)}
+.cuenta-grupo>.cuenta.extra .cuenta-cab h3::before{content:"↳ ";color:var(--primary-texto)}
 .modo-venc{display:none}
 .nuevo-res{display:none}
 .nuevo-res h3{margin:0 0 12px;font-size:1rem}
@@ -3172,7 +3179,7 @@ function renderListaCuentas() {
     ? `${nInact} ${plural(nInact, 'cuenta inactiva', 'cuentas inactivas')}. Sus lugares no cuentan como libres.`
     : `${activas.length} ${plural(activas.length, 'cuenta activa', 'cuentas activas')}, ${txtLib(totLibres)}${nInact ? `, ${nInact} ${plural(nInact, 'inactiva', 'inactivas')}` : ''}${mostrando}`;
   $('#listaCuentas').innerHTML = (lista.length
-      ? lista.slice(0, S.limCuentas).map(([c, i]) => tarjetaCuenta(c, i)).join('')
+      ? agruparExtras(lista.slice(0, S.limCuentas)).map(g => g.length > 1 ? `<div class="cuenta-grupo">${g.map(([c, i]) => tarjetaCuenta(c, i)).join('')}</div>` : tarjetaCuenta(g[0][0], g[0][1])).join('')
       : `<div class="vacio"><strong>Sin cuentas para mostrar</strong>Cambiá el filtro o la búsqueda.</div>`) +
     (lista.length > S.limCuentas ? `<button class="btn mas" data-accion="mas-cuentas">Mostrar ${Math.min(25, lista.length - S.limCuentas)} más de ${lista.length - S.limCuentas}</button>` : '');
   mosaicoCuentas();
@@ -3180,15 +3187,25 @@ function renderListaCuentas() {
     ? `${S.hojaSel}: datos ${horaDe(S.servViejo[S.hojaSel])}, actualizando…`
     : `${S.hojaSel}: ${txtLib(totLibres)}`;
 }
+// Las MIEMBRO EXTRA van pegadas a su cuenta (la que tiene el mismo nombre, ej. "Cuenta 1"), como una sola tarjeta
+const esExtra = c => /^miembro\s+extra/i.test(String(c.plan || ''));
+function agruparExtras(lista) {
+  const grupos = [], dePrincipal = new Map();
+  lista.forEach(x => { if (!esExtra(x[0])) { const g = [x]; grupos.push(g); dePrincipal.set(norm(x[0].nombre), g); } });
+  lista.forEach(x => { if (!esExtra(x[0])) return; const g = x[0].nombre && dePrincipal.get(norm(x[0].nombre)); if (g) g.push(x); else grupos.push([x]); });
+  // las sueltas (sin su cuenta en pantalla) quedan en su lugar de la lista
+  const pos = g => lista.indexOf(g[0]);
+  return grupos.sort((a, b) => pos(a) - pos(b));
+}
 // PC: las tarjetas en columnas tipo mosaico (cada una va a la columna más corta), sin huecos debajo de las cortas.
 // El orden se mantiene de izquierda a derecha y de arriba abajo, como lo leés.
 function mosaicoCuentas() {
   const box = $('#listaCuentas'); if (!box) return;
-  const cards = [...box.querySelectorAll('.cuenta')];
+  const cards = [...box.querySelectorAll(':scope > .cuenta, :scope > .cuenta-grupo, .mos-col > *')];
   const n = innerWidth >= 1500 ? 3 : innerWidth >= 1024 ? 2 : 1;
   box.classList.toggle('mosaico', n > 1 && cards.length > 1);
   if (n < 2 || cards.length < 2) { const m = box.querySelector('.mos'); if (m) { m.replaceWith(...cards); } return; }
-  const otros = [...box.children].filter(e => !e.classList.contains('cuenta') && !e.classList.contains('mos'));
+  const otros = [...box.children].filter(e => !e.classList.contains('cuenta') && !e.classList.contains('cuenta-grupo') && !e.classList.contains('mos'));
   const mos = document.createElement('div'); mos.className = 'mos';
   const cols = Array.from({ length: n }, () => { const d = document.createElement('div'); d.className = 'mos-col'; mos.append(d); return d; });
   box.replaceChildren(mos, ...otros);
@@ -3217,7 +3234,7 @@ function tarjetaCuenta(c, i) {
   const meta = c.notas.map(esc).join('. ');
   const hace = diasDesde(c.ultimoCambio);
   const cambioPass = c.ultimoCambio ? `<p class="cuenta-cambio">${ICON.llave}<span>Último cambio de contraseña: <b>${esc(c.ultimoCambio)}</b>${hace != null ? ` · ${hace === 0 ? 'hoy' : hace === 1 ? 'ayer' : `hace ${hace} días`}` : ''}</span></p>` : '';
-  return `<article class="cuenta ${c.inactiva ? 'inactiva' : ''}" id="cta-${i}">
+  return `<article class="cuenta ${c.inactiva ? 'inactiva' : ''} ${esExtra(c) ? 'extra' : ''}" id="cta-${i}">
     <header class="cuenta-cab"><div><h3>${esc(titulo)}</h3>${sub ? `<p>${esc(sub)}</p>` : ''}</div><div class="pills">${pills.join('')}</div></header>
     ${cred}${cambioPass}${meta ? `<p class="cuenta-meta">${meta}</p>` : ''}
     ${c.slots.length ? `<ul class="lugares">${(() => { let quedan = oa ? oa.disponibles : Infinity;   // solo tantas filas para asignar como lugares disponibles
