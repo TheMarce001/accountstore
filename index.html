@@ -3198,7 +3198,8 @@ function tarjetaCuenta(c, i) {
   return `<article class="cuenta ${c.inactiva ? 'inactiva' : ''}" id="cta-${i}">
     <header class="cuenta-cab"><div><h3>${esc(titulo)}</h3>${sub ? `<p>${esc(sub)}</p>` : ''}</div><div class="pills">${pills.join('')}</div></header>
     ${cred}${cambioPass}${meta ? `<p class="cuenta-meta">${meta}</p>` : ''}
-    ${c.slots.length ? `<ul class="lugares">${c.slots.map((s, j) => lugarHTML(s, i, j, c.inactiva, !!oa && !oa.disponibles)).join('')}</ul>` : ''}
+    ${c.slots.length ? `<ul class="lugares">${(() => { let quedan = oa ? oa.disponibles : Infinity;   // solo tantas filas para asignar como lugares disponibles
+      return c.slots.map((s, j) => { const asignable = s.libre || (S.asignando && reemplazable(s)); const sinCupo = asignable && quedan <= 0; if (asignable && !sinCupo) quedan--; return lugarHTML(s, i, j, c.inactiva, sinCupo); }).join(''); })()}</ul>` : ''}
     <footer class="cuenta-pie">${c.aviso ? `<button class="acc acc-aviso" data-accion="copiar-cuenta" data-v="aviso" data-i="${i}">${ICON.copiar}Copiar aviso</button>` : ''}${c.passCol && c.infoRow && puede('cambiarPass') ? `<button class="acc acc-pass" data-accion="cambiar-pass" data-i="${i}">${ICON.llave}Cambiar contraseña</button>` : ''}${S.reglas.envio && c.correo && c.infoRow && puede('cambiarPass') ? `<button class="acc acc-envio" data-accion="envio-pass" data-h="${esc(S.hojaSel)}" data-row="${c.infoRow}" data-n="${esc(c.nombre || c.plan || '')}" data-c="${esc(c.correo || '')}">${ICON.wa}Enviar contraseñas</button>` : ''}</footer>
   </article>`;
 }
@@ -3227,8 +3228,8 @@ const casaHTML = () => `<span class="casa" title="Dueño de hogar" aria-label="D
 const reemplazable = s => !s.libre && !!s.usuario && (!!s.huerfano || /cancelad/i.test(String(s.fecha || '')));
 function lugarHTML(s, i, j, inactiva = false, llena = false) {
   const marca = s.cerrar ? '<span class="marca-cerrar">cerrar</span>' : '';
-  // Cuenta llena por perfiles (ej. un cliente con 2 perfiles): la fila sobrante no se puede asignar
-  if (llena && !inactiva && (s.libre || (S.asignando && reemplazable(s)))) return `<li><div class="lugar libre"><span class="lugar-nom">${s.libre ? 'Libre' : `<s>${esc(s.usuario)}</s>`}${marca}</span><span class="lugar-acc" style="color:var(--muted)">Cuenta llena</span></div></li>`;
+  // Sin cupo: los perfiles de los clientes ya llenan la cuenta (ej. uno con 2 o 4 perfiles), esta fila sobra
+  if (llena && !inactiva && (s.libre || (S.asignando && reemplazable(s)))) return `<li><div class="lugar libre"><span class="lugar-nom">${s.libre ? 'Libre' : `<s>${esc(s.usuario)}</s>`}${marca}</span><span class="lugar-acc" style="color:var(--muted)">Sin cupo</span></div></li>`;
   if (S.asignando && !inactiva && reemplazable(s)) return `<li><button class="lugar libre" data-accion="lugar" data-i="${i}" data-j="${j}" data-fila="${s.row}"><span class="lugar-nom"><s>${esc(s.usuario)}</s> <small class="ayuda">${/cancelad/i.test(String(s.fecha || '')) ? 'cancelado' : 'disponible'}</small>${marca}</span><span class="lugar-acc">Asignar acá</span></button></li>`;
   if (s.libre && inactiva) return `<li><div class="lugar libre"><span class="lugar-nom">Libre${marca}</span><span class="lugar-acc" style="color:var(--muted)">No disponible</span></div></li>`;
   if (s.libre) return `<li><button class="lugar libre" data-accion="lugar" data-i="${i}" data-j="${j}" data-fila="${s.row}"><span class="lugar-nom">Libre${marca}</span><span class="lugar-acc">${S.asignando ? 'Asignar acá' : 'Asignar'}</span></button></li>`;
