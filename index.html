@@ -179,6 +179,19 @@ main{flex:1}
 .serv-est .pill{font-size:.72rem}
 .serv-pend{background:var(--primary-soft);border-color:transparent}
 .serv-pend .serv-ico{background:var(--primary);color:var(--primary-ink)}
+.serv-mini{display:none}
+@media (max-width:1023px){
+  .serv-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .serv-card{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:10px;row-gap:1px;align-items:center;min-height:0;padding:10px 10px 10px 10px;border-radius:var(--r-m)}
+  .serv-card:hover{transform:none;box-shadow:none}
+  .serv-ico{grid-row:1/3;width:30px;height:30px;border-radius:9px;font-size:.9rem}
+  .serv-ico svg{width:16px;height:16px}
+  .serv-txt small,.serv-est{display:none}
+  .serv-txt b{font-size:.875rem}
+  .serv-mini{display:block;font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .serv-mini .ok{font-style:normal;color:var(--primary-texto);font-weight:600}
+  .serv-mini em{font-style:normal;color:var(--hoy)}
+}
 @media (min-width:1024px){.serv-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.serv-card{min-height:128px;padding:16px}}
 .vacio strong{display:block;color:var(--ink);font-size:1.0625rem;margin-bottom:4px}
 .mas{margin:12px auto 0;display:flex}
@@ -2944,12 +2957,14 @@ function gridServicios(verPend) {
     return `<button class="serv-card" data-accion="hoja" data-h="${esc(h)}">
       <span class="serv-ico" aria-hidden="true">${em ? esc(em) : esc(ini)}</span>
       <span class="serv-txt"><b>${esc(h)}</b><small>${st ? `${st.c} ${plural(st.c, 'cuenta', 'cuentas')}${st.x ? ` · <em>${st.x} para cerrar</em>` : ''}` : '&nbsp;'}</small></span>
-      ${estado ? `<span class="serv-est">${estado}</span>` : ''}</button>`;
+      ${estado ? `<span class="serv-est">${estado}</span>` : ''}
+      <small class="serv-mini">${st && st.c ? (st.d > 0 ? `<i class="ok">+${st.d} ${st.x ? (st.a ? 'disp.' : plural(st.d, 'libre', 'libres')) : st.a ? plural(st.d, 'disponible', 'disponibles') : plural(st.d, 'libre', 'libres')}</i>` : 'Lleno') + (st.x ? ` · <em>${st.x} cerrar</em>` : '') : '&nbsp;'}</small></button>`;
   };
   const r = S.resumen;
   const pend = verPend ? `<button class="serv-card serv-pend" data-accion="pendientes">
       <span class="serv-ico" aria-hidden="true">${ICON.caja}</span>
-      <span class="serv-txt"><b>Pendientes</b><small>${r ? `${miles(r.cerrar || 0)} para cerrar · ${miles(r.liberar || 0)} para liberar` : 'Cerrar y liberar lugares'}</small></span></button>` : '';
+      <span class="serv-txt"><b>Pendientes</b><small>${r ? `${miles(r.cerrar || 0)} para cerrar · ${miles(r.liberar || 0)} para liberar` : 'Cerrar y liberar lugares'}</small></span>
+      <small class="serv-mini">${r ? `${miles(r.cerrar || 0)} cerrar · ${miles(r.liberar || 0)} liberar` : '&nbsp;'}</small></button>` : '';
   return `<div class="serv-grid">${pend}${S.servicios.map(tarjeta).join('')}</div>`;
 }
 // Después de asignar, liberar o dar de baja: actualiza la marca "(LLENO)/(+N)" de esas hojas sin hacer esperar
