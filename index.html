@@ -616,7 +616,23 @@ main{flex:1}
   #listaCuentas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
   #listaCuentas>.cuenta{margin-bottom:0}
   #listaCuentas>:not(.cuenta){grid-column:1/-1}
-  #v-pagos>*,#v-nuevo>*{max-width:860px}
+  /* Pagos: a la izquierda los totales, el botón y el buscador (quedan fijos); a la derecha la lista */
+  #v-pagos.activa{display:grid;grid-template-columns:340px minmax(0,1fr);column-gap:28px;align-items:start}
+  .pagos-lado{position:sticky;top:calc(var(--top-h,66px) + 8px)}
+  .pagos-lado .buscador{position:static;padding:0}
+  #pagosCuerpo{max-width:980px}
+  #pagosCuerpo>.chips:first-child{padding-top:0}
+  #pagosArriba .stats.tres{grid-template-columns:1fr}
+  #pagosArriba .stat{flex-direction:row;justify-content:space-between;padding:14px 18px;text-align:left}
+  #pagosArriba .stat b{font-size:1.25rem;order:2}
+  #pagosArriba .stat span{display:block;min-height:0;line-height:1.4}
+  #pagosArriba .stats.tres .stat+.stat::before{left:16px;right:16px;top:0;bottom:auto;width:auto;height:1px}
+  /* Nuevo cliente: datos del cliente y del cobro a la izquierda, servicios a la derecha */
+  #v-nuevo>*{max-width:1240px}
+  #fNuevo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;align-items:start}
+  #fNuevo>.tarjeta:nth-of-type(2){grid-column:2;grid-row:1/span 4}
+  #fNuevo>.tarjeta{margin-bottom:12px}
+  #fNuevo>.btn{grid-column:1}
   .hoja{justify-content:flex-end;align-items:stretch}
   .hoja-panel{max-width:560px;max-height:none;height:100dvh;border-radius:var(--r-l) 0 0 var(--r-l);transform:translateX(100%);padding:18px 24px 24px}
   .asa{display:none}
@@ -646,14 +662,16 @@ main{flex:1}
   .modo-venc button svg{width:17px;height:17px}
   .modo-venc button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink)}
   /* Tabla */
-  #listaVenc.tabla{display:block;background:var(--surface);border-radius:var(--r-l);overflow:hidden;border:1px solid var(--line)}
+  #listaVenc.tabla,#listaClientes.tabla{display:block;background:var(--surface);border-radius:var(--r-l);overflow:hidden;border:1px solid var(--line)}
   .fila-t{display:flex;align-items:center;border-top:1px solid var(--line);padding-right:8px}
   .fila-t:first-child{border-top:0}
   .fila-t:hover:not(.cab){background:var(--surface-2)}
-  .fila-t-main{flex:1;min-width:0;display:grid;grid-template-columns:70px minmax(180px,1.3fr) minmax(160px,1.5fr) 80px 110px;gap:16px;align-items:center;border:0;background:none;text-align:left;padding:9px 28px 9px 18px;color:inherit}
+  .fila-t-main{flex:1;min-width:0;display:grid;grid-template-columns:70px minmax(180px,1.3fr) minmax(160px,1.5fr) 92px 110px;gap:16px;align-items:center;border:0;background:none;text-align:left;padding:9px 28px 9px 18px;color:inherit}
   .fila-t.cab .fila-t-main{padding-top:12px;padding-bottom:12px;font-size:.6875rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   .fila-t.cab{background:var(--surface-2)}
   .fila-t.cab .fila-acc{width:114px}
+  #listaClientes.tabla .fila-t.cab .fila-acc{width:38px}
+  .lista.tabla>li:not(.fila-t){padding:10px;border-top:1px solid var(--line)}
   .fila-t .nom{font-size:.9375rem}
   .fila-t .num{font-variant-numeric:tabular-nums;font-size:.875rem;white-space:nowrap}
   .fila-t .der{text-align:right}
@@ -742,9 +760,11 @@ main{flex:1}
     </section>
 
     <section class="vista" id="v-pagos">
+      <div class="pagos-lado">
       <div id="pagosArriba"></div>
       <div class="buscador">
         <div class="campo-busca"><span id="icoBuscaPagos"></span><input id="qPagos" type="search" placeholder="Buscar por nombre, monto o banco" autocomplete="off" aria-label="Buscar transferencias"></div>
+      </div>
       </div>
       <div id="pagosCuerpo"></div>
     </section>
@@ -1602,7 +1622,14 @@ function filaCliente(c, acciones = true) {
 
 // PC: la lista de vencimientos también se puede ver como tabla (se recuerda en este equipo)
 const CAB_TABLA = '<li class="fila-t cab" aria-hidden="true"><span class="fila-t-main"><span>Días</span><span>Cliente</span><span>Servicios</span><span>Vence</span><span class="der">Monto</span></span><span class="fila-acc"></span></li>';
-function filaTabla(c) {
+function enTabla() {
+  if (S.modoVenc === undefined) { try { S.modoVenc = localStorage.getItem('as_modo_venc') || 'tarjetas'; } catch (e) { S.modoVenc = 'tarjetas'; } }
+  return S.modoVenc === 'tabla' && CON_MOUSE.matches && innerWidth >= 1024;
+}
+// El mismo selector (y la misma elección) para Vencimientos y Clientes
+const selectorModo = () => `<span class="modo-venc" role="group" aria-label="Ver como">${[['tarjetas', ICON.cuadros, 'Tarjetas'], ['tabla', ICON.renglones, 'Tabla']].map(([k, ic, lab]) =>
+  `<button data-accion="modo-venc" data-m="${k}" aria-pressed="${S.modoVenc === k}" title="${lab}" aria-label="Ver como ${lab.toLowerCase()}">${ic}</button>`).join('')}</span>`;
+function filaTabla(c, acciones = true) {
   const t = tipo(c), n = esc(soloNombre(c.nombre));
   const dias = t === 'baja' ? '–' : t === 'sin' ? '?' : c.dias === 0 ? 'Hoy' : `${c.dias > 0 ? '+' : ''}${c.dias}`;
   return `<li class="fila-t">
@@ -1610,14 +1637,13 @@ function filaTabla(c) {
       <span><span class="dias-t t-${t}">${dias}</span></span>
       <span class="nom">${nombreHTML(c.nombre)}${esDueno(c.servicios) ? casaHTML() : ''}</span>
       <span class="sub">${esc(c.servicios || 'Sin servicios cargados')}</span>
-      <span class="num">${pISO(c.venc) ? dmy(c.venc).slice(0, 5) : '—'}</span>
+      <span class="num">${pISO(c.venc) ? dmy(c.venc).slice(0, acciones ? 5 : 10) : t === 'baja' ? 'Baja' : '—'}</span>
       <span class="num der">${typeof c.monto === 'number' && c.monto > 0 ? gs(c.monto) : '—'}</span>
     </button>
-    <span class="fila-acc">${c.tel ? `<a class="ic ic-wa" href="${esc(waLink(c.tel, msgRecordatorio(c)))}" target="_blank" rel="noopener" aria-label="Recordatorio por WhatsApp a ${n}">${ICON.wa}</a>` : ''}<button class="ic" data-accion="renovar" data-row="${c.row}" aria-label="Renovar a ${n}">${ICON.renovar}</button><button class="ic ic-flecha" data-accion="detalle" data-row="${c.row}" aria-label="Ver a ${n}">${ICON.flecha}</button></span>
+    <span class="fila-acc">${acciones ? `${c.tel ? `<a class="ic ic-wa" href="${esc(waLink(c.tel, msgRecordatorio(c)))}" target="_blank" rel="noopener" aria-label="Recordatorio por WhatsApp a ${n}">${ICON.wa}</a>` : ''}<button class="ic" data-accion="renovar" data-row="${c.row}" aria-label="Renovar a ${n}">${ICON.renovar}</button>` : ''}<button class="ic ic-flecha" data-accion="detalle" data-row="${c.row}" aria-label="Ver a ${n}">${ICON.flecha}</button></span>
   </li>`;
 }
 function renderVenc() {
-  if (S.modoVenc === undefined) { try { S.modoVenc = localStorage.getItem('as_modo_venc') || 'tarjetas'; } catch (e) { S.modoVenc = 'tarjetas'; } }
   renderResumen();
   const todos = activos();
   // Buscador: filtra todos los grupos a la vez; los números de los filtros muestran las coincidencias
@@ -1628,8 +1654,7 @@ function renderVenc() {
   if (!S.filtroVenc) S.filtroVenc = cuenta.hoy ? 'hoy' : cuenta.pronto ? 'pronto' : cuenta.vencidos ? 'vencidos' : 'semana';
   $('#chipsVenc').innerHTML = GRUPOS.map(([k, lab, , cls]) =>
     `<button class="chip ${cuenta[k] ? cls : ''}" data-accion="filtro-venc" data-f="${k}" aria-pressed="${S.filtroVenc === k}">${lab} <b>${cuenta[k]}</b></button>`).join('') +
-    `<span class="modo-venc" role="group" aria-label="Ver como">${[['tarjetas', ICON.cuadros, 'Tarjetas'], ['tabla', ICON.renglones, 'Tabla']].map(([k, ic, lab]) =>
-      `<button data-accion="modo-venc" data-m="${k}" aria-pressed="${S.modoVenc === k}" title="${lab}" aria-label="Ver como ${lab.toLowerCase()}">${ic}</button>`).join('')}</span>`;
+    selectorModo();
   const g = GRUPOS.find(x => x[0] === S.filtroVenc);
   let lista = act.filter(g[2]);
   lista.sort(S.filtroVenc === 'vencidos' ? (a, b) => b.dias - a.dias : (a, b) => a.dias - b.dias || a.nomN.localeCompare(b.nomN));
@@ -1649,7 +1674,7 @@ function renderVenc() {
     const otros = GRUPOS.filter(([k]) => cuenta[k]).map(([k, lab]) => `<button class="chip" data-accion="filtro-venc" data-f="${k}">${lab} <b>${cuenta[k]}</b></button>`).join('');
     vacio = `<li class="vacio"><strong>No hay en ${esc(g[1])}</strong>Pero sí aparece en:<div class="chips" style="justify-content:center;margin-top:10px">${otros}</div></li>`;
   }
-  const tabla = S.modoVenc === 'tabla' && CON_MOUSE.matches && innerWidth >= 1024;
+  const tabla = enTabla();
   $('#listaVenc').classList.toggle('tabla', tabla);
   $('#listaVenc').innerHTML = lista.length
     ? (tabla ? CAB_TABLA : '') + lista.slice(0, lim).map(c => tabla ? filaTabla(c) : filaCliente(c)).join('') + (lista.length > lim ? `<li class="vacio">Mostrando ${lim} de ${lista.length}. Buscá en Clientes para ver el resto.</li>` : '')
@@ -1690,10 +1715,12 @@ function renderClientes() {
   S.clientes.forEach(c => tipo(c) === 'baja' ? n.bajas++ : n.activos++);
   const pend = S.bajasCargadas ? '' : '…';
   $('#chipsClientes').innerHTML = [['activos', 'Activos', n.activos], ['todos', 'Todos', S.bajasCargadas ? S.clientes.length : pend], ['bajas', 'Dados de baja', S.bajasCargadas ? n.bajas : pend]]
-    .map(([k, lab, num]) => `<button class="chip" data-accion="filtro-cli" data-f="${k}" aria-pressed="${S.filtroCli === k}">${lab} <b>${num}</b></button>`).join('');
+    .map(([k, lab, num]) => `<button class="chip" data-accion="filtro-cli" data-f="${k}" aria-pressed="${S.filtroCli === k}">${lab} <b>${num}</b></button>`).join('') + selectorModo();
   const res = buscarClientes(S.q, S.filtroCli);
+  const tabla = enTabla();
+  $('#listaClientes').classList.toggle('tabla', tabla);
   $('#listaClientes').innerHTML = res.length
-    ? res.slice(0, S.limCli).map(c => filaCliente(c, false)).join('') +
+    ? (tabla ? CAB_TABLA : '') + res.slice(0, S.limCli).map(c => tabla ? filaTabla(c, false) : filaCliente(c, false)).join('') +
       (res.length > S.limCli ? `<li><button class="btn mas" data-accion="mas-cli">Mostrar ${Math.min(50, res.length - S.limCli)} más de ${res.length - S.limCli}</button></li>` : '')
     : `<li class="vacio"><strong>Sin resultados</strong>Probá con parte del nombre o los últimos dígitos del teléfono.</li>`;
   if (!S.bajasCargadas && S.filtroCli !== 'activos') $('#listaClientes').insertAdjacentHTML('beforeend', '<li class="vacio">Todavía se están cargando los dados de baja…</li>');
@@ -3454,8 +3481,19 @@ function montoPago(t) {
   return { moneda, n: n || 0 };
 }
 const textoMonto = p => p.moneda === 'PYG' ? 'Gs. ' + miles(p.n) : p.moneda + ' ' + p.n.toLocaleString('es-PY');
+// Letras rotas que vienen de algunos correos del banco (UTF-8 leído como Windows-1252): "ACUÃ‘A" → "ACUÑA"
+const CP1252 = '€\u0081‚ƒ„…†‡ˆ‰Š‹Œ\u008DŽ\u008F\u0090‘’“”•–—˜™š›œ\u009DžŸ';
+function arreglarLetras(t) {
+  t = String(t ?? '');
+  if (!/[ÃÂ][\u0080-\u00BF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/.test(t)) return t;
+  try {
+    const bytes = Uint8Array.from([...t], ch => { const k = CP1252.indexOf(ch); const n = k >= 0 ? 0x80 + k : ch.charCodeAt(0); if (n > 255) throw 0; return n; });
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch (e) { return t; }
+}
 function decPago(a) {
-  const [f, entidad, pagador, monto, etiqueta, id, extra, nroCuenta] = a;
+  let [f, entidad, pagador, monto, etiqueta, id, extra, nroCuenta] = a;
+  pagador = arreglarLetras(pagador); entidad = arreglarLetras(entidad);
   return { f, dia: f.slice(0, 10), hora: f.slice(11, 16), entidad, pagador, monto: montoPago(monto), cuenta: cuentaPago(etiqueta), etiqueta, id, extra: extra || '', nroCuenta: nroCuenta || '' };
 }
 // Debajo del nombre: la hora y el banco del que pagó (o el comprobante, si el aviso no trae banco)
@@ -3819,7 +3857,7 @@ document.addEventListener('click', e => {
     case 'ir-cuentas': cambiarVista('cuentas'); break;
     case 'ir-pend': cambiarVista('cuentas'); S.fPend = d.f; abrirPendientes(); break;
     case 'filtro-venc': S.filtroVenc = d.f; renderVenc(); break;
-    case 'modo-venc': S.modoVenc = d.m; try { localStorage.setItem('as_modo_venc', d.m); } catch (e) { } renderVenc(); break;
+    case 'modo-venc': S.modoVenc = d.m; try { localStorage.setItem('as_modo_venc', d.m); } catch (e) { } S.vista === 'clientes' ? renderClientes() : renderVenc(); break;
     case 'filtro-cli': S.filtroCli = d.f; S.limCli = 50; renderClientes(); break;
     case 'mas-cli': S.limCli += 50; renderClientes(); break;
     case 'detalle': abrirDetalle(d.row, hoja.abierta); break;
