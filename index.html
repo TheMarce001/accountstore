@@ -629,6 +629,40 @@ main{flex:1}
   .sugs.dosfilas.plegado{max-height:82px;overflow:hidden}   /* dos líneas; "Ver todos" despliega el resto */
   .ver-mas-sugs{display:inline-flex;align-items:center;gap:4px;margin:6px 0 2px;font-size:.8125rem;font-weight:600}
 }
+/* PC: contenido pegado al menú (sin hueco en pantallas anchas), días en color suave y acciones tenues hasta pasar el mouse */
+.modo-venc{display:none}
+@media (min-width:1024px){
+  .top,.vista{max-width:1640px;margin-left:0;margin-right:0}
+  .dias.t-vencido{background:color-mix(in srgb,var(--venc) 16%,transparent);color:var(--venc)}
+  .dias.t-hoy{background:color-mix(in srgb,var(--hoy) 16%,transparent);color:var(--hoy)}
+  .fila{border:1px solid transparent;transition:border-color .15s,background .15s}
+  .fila:hover{border-color:var(--line);background:var(--surface-2)}
+  .fila .fila-main:hover{background:none}
+  .fila-acc .ic{opacity:.5;transition:opacity .15s}
+  .fila:hover .fila-acc .ic,.fila-acc .ic:focus-visible{opacity:1}
+  .fila-acc .ic:hover{background:var(--surface-2)}
+  .modo-venc{display:inline-flex;margin-left:auto;align-self:center;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;background:var(--surface)}
+  .modo-venc button{width:34px;height:30px;border:0;border-radius:999px;background:none;color:var(--muted);display:grid;place-items:center}
+  .modo-venc button svg{width:17px;height:17px}
+  .modo-venc button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink)}
+  /* Tabla */
+  #listaVenc.tabla{display:block;background:var(--surface);border-radius:var(--r-l);overflow:hidden;border:1px solid var(--line)}
+  .fila-t{display:flex;align-items:center;border-top:1px solid var(--line);padding-right:8px}
+  .fila-t:first-child{border-top:0}
+  .fila-t:hover:not(.cab){background:var(--surface-2)}
+  .fila-t-main{flex:1;min-width:0;display:grid;grid-template-columns:70px minmax(180px,1.3fr) minmax(160px,1.5fr) 80px 110px;gap:16px;align-items:center;border:0;background:none;text-align:left;padding:9px 28px 9px 18px;color:inherit}
+  .fila-t.cab .fila-t-main{padding-top:12px;padding-bottom:12px;font-size:.6875rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .fila-t.cab{background:var(--surface-2)}
+  .fila-t.cab .fila-acc{width:114px}
+  .fila-t .nom{font-size:.9375rem}
+  .fila-t .num{font-variant-numeric:tabular-nums;font-size:.875rem;white-space:nowrap}
+  .fila-t .der{text-align:right}
+  .dias-t{display:inline-block;min-width:44px;text-align:center;padding:3px 8px;border-radius:999px;font-weight:700;font-size:.8125rem;font-variant-numeric:tabular-nums}
+  .dias-t.t-vencido{background:color-mix(in srgb,var(--venc) 16%,transparent);color:var(--venc)}
+  .dias-t.t-hoy{background:color-mix(in srgb,var(--hoy) 16%,transparent);color:var(--hoy)}
+  .fila-t .fila-acc .ic{width:38px;height:38px}
+  .fila-t:hover .fila-acc .ic{opacity:1}
+}
 @media (min-width:1500px){
   #listaVenc,#listaClientes{grid-template-columns:repeat(3,minmax(0,1fr))}
   #listaCuentas{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -749,6 +783,8 @@ main{flex:1}
    ================================================================ */
 const svg = (d, extra='') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${d}</svg>`;
 const ICON = {
+  cuadros: svg('<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'),
+  renglones: svg('<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>'),
   cal: svg('<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v3l2 1.5"/>'),
   gente: svg('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.2 14.8c1.8.8 2.9 2.5 3.3 5.2"/>'),
   llave: svg('<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5l2.5 2.5M14 9l2 2"/>'),
@@ -1564,7 +1600,24 @@ function filaCliente(c, acciones = true) {
   return `<li class="fila"><button class="fila-main" data-accion="detalle" data-row="${c.row}">${badge(c)}<span class="fila-txt"><span class="nom">${nombreHTML(c.nombre)}${esDueno(c.servicios) ? casaHTML() : ''}</span><span class="sub">${esc(c.servicios || 'Sin servicios cargados')}</span><span class="meta">${meta.join('')}</span></span></button>${acc}</li>`;
 }
 
+// PC: la lista de vencimientos también se puede ver como tabla (se recuerda en este equipo)
+const CAB_TABLA = '<li class="fila-t cab" aria-hidden="true"><span class="fila-t-main"><span>Días</span><span>Cliente</span><span>Servicios</span><span>Vence</span><span class="der">Monto</span></span><span class="fila-acc"></span></li>';
+function filaTabla(c) {
+  const t = tipo(c), n = esc(soloNombre(c.nombre));
+  const dias = t === 'baja' ? '–' : t === 'sin' ? '?' : c.dias === 0 ? 'Hoy' : `${c.dias > 0 ? '+' : ''}${c.dias}`;
+  return `<li class="fila-t">
+    <button class="fila-t-main" data-accion="detalle" data-row="${c.row}">
+      <span><span class="dias-t t-${t}">${dias}</span></span>
+      <span class="nom">${nombreHTML(c.nombre)}${esDueno(c.servicios) ? casaHTML() : ''}</span>
+      <span class="sub">${esc(c.servicios || 'Sin servicios cargados')}</span>
+      <span class="num">${pISO(c.venc) ? dmy(c.venc).slice(0, 5) : '—'}</span>
+      <span class="num der">${typeof c.monto === 'number' && c.monto > 0 ? gs(c.monto) : '—'}</span>
+    </button>
+    <span class="fila-acc">${c.tel ? `<a class="ic ic-wa" href="${esc(waLink(c.tel, msgRecordatorio(c)))}" target="_blank" rel="noopener" aria-label="Recordatorio por WhatsApp a ${n}">${ICON.wa}</a>` : ''}<button class="ic" data-accion="renovar" data-row="${c.row}" aria-label="Renovar a ${n}">${ICON.renovar}</button><button class="ic ic-flecha" data-accion="detalle" data-row="${c.row}" aria-label="Ver a ${n}">${ICON.flecha}</button></span>
+  </li>`;
+}
 function renderVenc() {
+  if (S.modoVenc === undefined) { try { S.modoVenc = localStorage.getItem('as_modo_venc') || 'tarjetas'; } catch (e) { S.modoVenc = 'tarjetas'; } }
   renderResumen();
   const todos = activos();
   // Buscador: filtra todos los grupos a la vez; los números de los filtros muestran las coincidencias
@@ -1574,7 +1627,9 @@ function renderVenc() {
   GRUPOS.forEach(([k, , f]) => cuenta[k] = act.filter(f).length);
   if (!S.filtroVenc) S.filtroVenc = cuenta.hoy ? 'hoy' : cuenta.pronto ? 'pronto' : cuenta.vencidos ? 'vencidos' : 'semana';
   $('#chipsVenc').innerHTML = GRUPOS.map(([k, lab, , cls]) =>
-    `<button class="chip ${cuenta[k] ? cls : ''}" data-accion="filtro-venc" data-f="${k}" aria-pressed="${S.filtroVenc === k}">${lab} <b>${cuenta[k]}</b></button>`).join('');
+    `<button class="chip ${cuenta[k] ? cls : ''}" data-accion="filtro-venc" data-f="${k}" aria-pressed="${S.filtroVenc === k}">${lab} <b>${cuenta[k]}</b></button>`).join('') +
+    `<span class="modo-venc" role="group" aria-label="Ver como">${[['tarjetas', ICON.cuadros, 'Tarjetas'], ['tabla', ICON.renglones, 'Tabla']].map(([k, ic, lab]) =>
+      `<button data-accion="modo-venc" data-m="${k}" aria-pressed="${S.modoVenc === k}" title="${lab}" aria-label="Ver como ${lab.toLowerCase()}">${ic}</button>`).join('')}</span>`;
   const g = GRUPOS.find(x => x[0] === S.filtroVenc);
   let lista = act.filter(g[2]);
   lista.sort(S.filtroVenc === 'vencidos' ? (a, b) => b.dias - a.dias : (a, b) => a.dias - b.dias || a.nomN.localeCompare(b.nomN));
@@ -1594,8 +1649,10 @@ function renderVenc() {
     const otros = GRUPOS.filter(([k]) => cuenta[k]).map(([k, lab]) => `<button class="chip" data-accion="filtro-venc" data-f="${k}">${lab} <b>${cuenta[k]}</b></button>`).join('');
     vacio = `<li class="vacio"><strong>No hay en ${esc(g[1])}</strong>Pero sí aparece en:<div class="chips" style="justify-content:center;margin-top:10px">${otros}</div></li>`;
   }
+  const tabla = S.modoVenc === 'tabla' && CON_MOUSE.matches && innerWidth >= 1024;
+  $('#listaVenc').classList.toggle('tabla', tabla);
   $('#listaVenc').innerHTML = lista.length
-    ? lista.slice(0, lim).map(c => filaCliente(c)).join('') + (lista.length > lim ? `<li class="vacio">Mostrando ${lim} de ${lista.length}. Buscá en Clientes para ver el resto.</li>` : '')
+    ? (tabla ? CAB_TABLA : '') + lista.slice(0, lim).map(c => tabla ? filaTabla(c) : filaCliente(c)).join('') + (lista.length > lim ? `<li class="vacio">Mostrando ${lim} de ${lista.length}. Buscá en Clientes para ver el resto.</li>` : '')
     : vacio;
   if (S.vista === 'venc') {
     const partes = [];
@@ -3762,6 +3819,7 @@ document.addEventListener('click', e => {
     case 'ir-cuentas': cambiarVista('cuentas'); break;
     case 'ir-pend': cambiarVista('cuentas'); S.fPend = d.f; abrirPendientes(); break;
     case 'filtro-venc': S.filtroVenc = d.f; renderVenc(); break;
+    case 'modo-venc': S.modoVenc = d.m; try { localStorage.setItem('as_modo_venc', d.m); } catch (e) { } renderVenc(); break;
     case 'filtro-cli': S.filtroCli = d.f; S.limCli = 50; renderClientes(); break;
     case 'mas-cli': S.limCli += 50; renderClientes(); break;
     case 'detalle': abrirDetalle(d.row, hoja.abierta); break;
