@@ -688,6 +688,11 @@ main{flex:1}
 /* Modo presentación */
 body.censura :is(.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b),
 body.censura .form :is(input[name=nombre], input[name=telefono], input[name=correo], input[name=password], input[name=pin], input[name=pins], input[name=idc]){filter:blur(6px);user-select:none}
+/* Donde el navegador lo permite (Chrome, Edge, Safari), en vez de borroso se ven puntos, como una contraseña */
+@supports (-webkit-text-security: disc){
+  body.censura :is(.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b),
+  body.censura .form :is(input[name=nombre], input[name=telefono], input[name=correo], input[name=password], input[name=pin], input[name=pins], input[name=idc]){filter:none;-webkit-text-security:disc;letter-spacing:.06em}
+}
 body.censura #btnCensura{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
 .modo-venc{display:none}
 .nuevo-res{display:none}
