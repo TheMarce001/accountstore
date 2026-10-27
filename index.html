@@ -688,9 +688,9 @@ main{flex:1}
 /* Modo presentación */
 body.censura :is(.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b),
 body.censura .form :is(input[name=nombre], input[name=telefono], input[name=correo], input[name=password], input[name=pin], input[name=pins], input[name=idc]){filter:blur(6px);user-select:none}
-/* Donde el navegador lo permite (Chrome, Edge, Safari), en vez de borroso se ven puntos, como una contraseña */
+/* Con el modo presentación, los textos se tapan en parte (ver taparTexto); los campos de los formularios, con puntos */
+body.censura.tapado :is(.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b){filter:none;user-select:none}
 @supports (-webkit-text-security: disc){
-  body.censura :is(.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b),
   body.censura .form :is(input[name=nombre], input[name=telefono], input[name=correo], input[name=password], input[name=pin], input[name=pins], input[name=idc]){filter:none;-webkit-text-security:disc;letter-spacing:.06em}
 }
 body.censura #btnCensura{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
@@ -4359,11 +4359,45 @@ const medirTop = () => document.documentElement.style.setProperty('--top-h', 'en
 medirTop(); addEventListener('resize', medirTop);
 $('#btnActualizar').innerHTML = ICON.actualizar;
 // Modo presentación: difumina nombres, teléfonos, correos y contraseñas (solo se ve borroso; los datos y los botones siguen igual)
+// Se tapa en parte, como en los bancos: "M•••• B••••", "+595 9•• ••• 123", "m••••@gmail.com". El texto original se guarda y vuelve al apagar.
+const SEL_CENSURA = '.sx, .nom, .lugar-nom, .pago-t b, .pago-txt b, .usada-pill, .cred-item:first-child span, [data-pass], .cuenta-meta, .junto-cab b, .pend-fila b, .nuevo-res dd, .pago-nuevo b, .existe b, .pago-renovar b';
+const PALABRAS_LIBRES = new Set(['usada', 'gs.', '·', '-', '—', 'y', 'de', 'del']);
+function taparTexto(t) {
+  if (!t.trim()) return t;
+  // una sola pasada: correo | teléfono | palabra (así lo ya tapado no se vuelve a tapar)
+  return t.replace(/([^\s@]+@[^\s@]+\.[^\s@]+)|(\+?\d[\d\s().-]{6,}\d)|([\p{L}\p{N}][\p{L}\p{N}.'’]*)/gu, (m, mail, tel, w) => {
+    if (mail) { const [u, d] = mail.split('@'); return u.charAt(0) + '••••@' + d; }
+    if (tel) { const d = tel.replace(/\D/g, ''); return d.startsWith('595') ? `+595 ${d.charAt(3)}•• ••• ${d.slice(-3)}` : `${d.charAt(0)}•• ••• ${d.slice(-3)}`; }
+    if (PALABRAS_LIBRES.has(w.toLowerCase())) return w;
+    if (/^\d+$/.test(w)) return '•'.repeat(Math.min(w.length, 4));   // PIN, ID, números sueltos
+    return w.charAt(0) + '•'.repeat(Math.min(Math.max(w.length - 1, 2), 4));
+  });
+}
+const tapados = new Map();   // nodo de texto → texto original
+function taparEn(raiz) {
+  const els = raiz.nodeType === 1 ? [...(raiz.matches && raiz.matches(SEL_CENSURA) ? [raiz] : []), ...raiz.querySelectorAll(SEL_CENSURA)] : [];
+  els.forEach(el => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      if (n.parentElement && n.parentElement.closest('svg, .nom-emoji')) continue;
+      const orig = tapados.has(n) && n.data === tapados.get(n).tapado ? tapados.get(n).orig : n.data;
+      const tap = taparTexto(orig);
+      if (tap !== n.data) { tapados.set(n, { orig, tapado: tap }); n.data = tap; }
+    }
+  });
+}
+const vigiaCensura = new MutationObserver(ms => ms.forEach(m => {
+  if (m.type === 'characterData') { const n = m.target, x = tapados.get(n); if (!x || n.data !== x.tapado) { tapados.delete(n); n.parentElement && taparEn(n.parentElement.closest(SEL_CENSURA) || n.parentElement); } }
+  else m.addedNodes.forEach(n => taparEn(n.nodeType === 3 ? (n.parentElement && (n.parentElement.closest(SEL_CENSURA) || n.parentElement)) || document.createElement('i') : n));
+}));
 const censura = {
   activo() { try { return localStorage.getItem('as_censura') === '1'; } catch (e) { return false; } },
   aplicar(on) {
     try { on ? localStorage.setItem('as_censura', '1') : localStorage.removeItem('as_censura'); } catch (e) { }
     document.body.classList.toggle('censura', on);
+    document.body.classList.toggle('tapado', on);
+    if (on) { taparEn(document.body); vigiaCensura.observe(document.body, { childList: true, subtree: true, characterData: true }); }
+    else { vigiaCensura.disconnect(); tapados.forEach((x, n) => { if (n.data === x.tapado) n.data = x.orig; }); tapados.clear(); }
     const b = $('#btnCensura'); b.innerHTML = on ? ICON.ojoNo : ICON.ojo; b.setAttribute('aria-pressed', String(on));
     b.title = on ? 'Modo presentación activado: tocá para mostrar los datos' : 'Modo presentación: ocultar datos de clientes';
   }
