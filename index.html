@@ -705,7 +705,8 @@ body.censura #btnCensura{background:var(--primary);color:var(--primary-ink);bord
 .aviso-item .envio-check{align-items:flex-start}
 .copiar-nom{width:30px;height:30px;margin:-6px 0 -6px 2px;vertical-align:middle}
 .copiar-nom svg{width:16px;height:16px}
-.copiar-nom:hover,.copiar-nom:focus-visible{color:var(--primary-texto)}
+.copiar-nom:not(.ic-wa):hover,.copiar-nom:not(.ic-wa):focus-visible{color:var(--primary-texto)}
+.copiar-nom+.copiar-nom{margin-left:-4px}
 .aviso-notas{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .aviso-msg{margin:0 0 0 30px;font-size:.8125rem}
 .aviso-msg summary{color:var(--primary-texto);cursor:pointer;font-weight:600}
@@ -3005,7 +3006,7 @@ function renderAvisos(r) {
       const notas = [x.avisado ? `<span class="pill">Ya avisado hoy ${esc(x.avisado)}</span>` : '', !x.telOk ? '<span class="pill cerrar">Teléfono no válido</span>' : '',
         x.tigoSinCorreo ? '<span class="pill">Tigo sin correo</span>' : ''].join('');
       return `<div class="aviso-item"><label class="check envio-check"><input type="checkbox" name="aviso" value="${x.row}" ${marcar ? 'checked' : ''} ${x.telOk ? '' : 'disabled'} data-accion="avisos-contar">
-        <span><b>${nombreHTML(x.nombre)}</b><button type="button" class="ic copiar-nom" data-accion="copiar-txt" data-t="${esc(soloNombre(x.nombre))}" aria-label="Copiar nombre" title="Copiar nombre">${ICON.copiar}</button><small> · ${r.oMas ? `-${x.dias} días · ` : ''}${esc(x.servicios)}</small>${notas ? `<span class="aviso-notas">${notas}</span>` : ''}</span></label>
+        <span><b>${nombreHTML(x.nombre)}</b><button type="button" class="ic copiar-nom" data-accion="copiar-txt" data-t="${esc(soloNombre(x.nombre))}" aria-label="Copiar nombre" title="Copiar nombre">${ICON.copiar}</button>${x.telOk ? `<a class="ic ic-wa copiar-nom" href="${esc(waLink(x.tel))}" target="_blank" rel="noopener" aria-label="Abrir el WhatsApp de ${esc(soloNombre(x.nombre))}" title="Abrir su WhatsApp">${ICON.wa}</a>` : ''}<small> · ${r.oMas ? `-${x.dias} días · ` : ''}${esc(x.servicios)}</small>${notas ? `<span class="aviso-notas">${notas}</span>` : ''}</span></label>
         <details class="aviso-msg"><summary>Ver mensaje</summary><pre>${esc(x.mensaje)}</pre></details></div>`;
     }).join('')}</div>
     <div class="fila-btn" style="margin:4px 0 10px"><button type="button" class="link" data-accion="avisos-todos">Marcar todos</button><button type="button" class="link" data-accion="avisos-ninguno">Ninguno</button></div>
