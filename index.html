@@ -1946,7 +1946,7 @@ function abrirRenovar(row, pagoI, volverAvisos) {
       </div>
       <div class="previa" id="rPrevia"></div>
       <button class="btn btn-pri btn-bloque" type="submit">${t === 'baja' ? 'Reactivar' : 'Guardar renovación'}</button>
-      ${volverAvisos != null ? `<button class="btn btn-bloque" type="button" data-accion="avisos-dia" data-d="${volverAvisos}">Volver a Avisos de mora</button>` : ''}
+      ${volverAvisos != null ? `<button class="btn btn-bloque" type="button" data-accion="avisos-volver" data-d="${volverAvisos}">Volver a Avisos de mora</button>` : ''}
     </form>`;
   if (hoja.abierta) hoja.cambiar(html); else hoja.abrir(html);
   previaRenovar();
@@ -2312,7 +2312,7 @@ async function guardarRenovar(f) {
     anotarPagoUsado(pr, nuevo.nombre);
     hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Renovado hasta el ${dmy(nuevo.venc)}</h2><p>${esc(nuevo.nombre)}</p>
       <div class="pila">${nuevo.tel ? `<a class="btn btn-wa" href="${esc(waLink(nuevo.tel, llenar(S.msgs.renovado, nuevo)))}" target="_blank" rel="noopener">${ICON.wa}Enviar confirmación</a>` : ''}
-      ${f.dataset.volver ? `<button class="btn" data-accion="avisos-dia" data-d="${esc(f.dataset.volver)}">Volver a Avisos de mora</button>` : `<button class="btn" data-accion="detalle" data-row="${nuevo.row}">Ver cliente</button>`}
+      ${f.dataset.volver ? `<button class="btn" data-accion="avisos-volver" data-d="${esc(f.dataset.volver)}" data-quitar="${c.row}">Volver a Avisos de mora</button>` : `<button class="btn" data-accion="detalle" data-row="${nuevo.row}">Ver cliente</button>`}
       <button class="btn" data-accion="cerrar">Listo</button></div></div>`);
   } catch (e) { toast(msgError(e), true); b.disabled = false; b.textContent = txt; }
 }
@@ -2927,7 +2927,7 @@ function abrirBaja(row, volverAvisos) {
         <span class="ayuda">El nombre queda en su lugar, reservado por si vuelve. Marcá las cuentas a las que les tenés que cambiar la contraseña.</span>
       </div>
       <button class="btn btn-peligro btn-bloque" type="submit">Dar de baja</button>
-      ${volverAvisos != null ? `<button class="btn btn-bloque" type="button" data-accion="avisos-dia" data-d="${volverAvisos}">Volver a Avisos de mora</button>` : ''}
+      ${volverAvisos != null ? `<button class="btn btn-bloque" type="button" data-accion="avisos-volver" data-d="${volverAvisos}">Volver a Avisos de mora</button>` : ''}
     </form>`);
   ayudaDias($('#fBaja'));
   // al dar de baja se revisan TODAS las hojas, para no dejar ningún lugar sin marcar
@@ -2977,7 +2977,7 @@ async function guardarBaja(f) {
     hoja.cambiar(`<div class="exito"><div class="marca">${ICON.ok}</div><h2>Dado de baja</h2>
       <p>${esc(nuevo.nombre)}${dias ? `, esperó ${dias} ${plural(dias, 'día', 'días')}` : ''}</p></div>
       ${filas ? `<ul class="lista" style="background:var(--surface);border-radius:var(--r-l);padding:4px 12px;margin-bottom:14px">${filas}</ul>` : ''}
-      <div class="pila">${f.dataset.volver ? `<button class="btn" data-accion="avisos-dia" data-d="${esc(f.dataset.volver)}">Volver a Avisos de mora</button>` : ''}<button class="btn" data-accion="cerrar">Listo</button></div>`);
+      <div class="pila">${f.dataset.volver ? `<button class="btn" data-accion="avisos-volver" data-d="${esc(f.dataset.volver)}" data-quitar="${c.row}">Volver a Avisos de mora</button>` : ''}<button class="btn" data-accion="cerrar">Listo</button></div>`);
     // la fecha del último cambio de contraseña, leída de la planilla (por si ya se cambió hace poco)
     r.marcas.forEach(m => api('getCuenta', m.hoja, m.row).then(cu => {
       mezclarServicio(m.hoja, cu);
@@ -2992,7 +2992,7 @@ async function guardarBaja(f) {
 // 'hoy', 'ayer' o dd/mm (para el historial de avisos)
 const diaCorto = f => f === S.hoy ? 'hoy' : f === isoMasDias(S.hoy, -1) ? 'ayer' : f.slice(8, 10) + '/' + f.slice(5, 7);
 const atrasados = d => activos().filter(c => typeof c.dias === 'number' && (d === 'mas' ? c.dias <= -4 : c.dias === -d)).length;
-function abrirAvisosMora(dias) {
+function abrirAvisosMora(dias, guardado) {
   dias = dias === 'mas' ? 'mas' : Number(dias) || 1;
   S.avisosDias = dias;
   const opciones = [1, 2, 3].concat(atrasados('mas') ? ['mas'] : []);
@@ -3001,11 +3001,24 @@ function abrirAvisosMora(dias) {
       `<button class="chip" data-accion="avisos-dia" data-d="${d}" aria-pressed="${d === dias}">${d === 'mas' ? '-4 o más' : `-${d} ${d === 1 ? 'día' : 'días'}`} <b>${atrasados(d)}</b></button>`).join('')}</div>
     <div id="avisosCuerpo"><div class="vacio"><span class="spin-txt">Armando los mensajes…</span></div></div>`;
   hoja.abierta ? hoja.cambiar(html) : hoja.abrir(html);
+  if (guardado) return volverAAvisos(guardado);
   (dias === 'mas' ? api('previaAvisosMora', 4, true) : api('previaAvisosMora', dias)).then(r => { if (S.avisosDias === dias) renderAvisos(r); })
     .catch(e => { const b = $('#avisosCuerpo'); if (b) b.innerHTML = `<div class="vacio"><strong>No se pudo armar la lista</strong>${esc(msgError(e))}</div>`; });
 }
+/* Al ir a Renovar o Dar de baja desde la lista se guarda lo que había (datos y casillas): al volver no se lee todo de nuevo */
+function guardarAvisos() {
+  const f = $('#fAvisos');
+  S.avisosGuardado = S.avisosR && f ? { dias: S.avisosDias, r: S.avisosR, marcadas: [...f.querySelectorAll('[name=aviso]:checked')].map(i => Number(i.value)) } : null;
+}
+function volverAAvisos(g) {
+  renderAvisos(g.r);
+  const f = $('#fAvisos'); if (!f) return;
+  f.querySelectorAll('[name=aviso]').forEach(i => { i.checked = g.marcadas.includes(Number(i.value)); });
+  contarAvisos();
+}
 function renderAvisos(r) {
   const box = $('#avisosCuerpo'); if (!box) return;
+  S.avisosR = r;
   S.avisosItems = r.items;
   if (!r.items.length) { box.innerHTML = `<div class="vacio"><strong>Nadie con ${r.dias}${r.oMas ? ' o más' : ''} ${plural(r.dias, 'día', 'días')} de atraso</strong>Probá con otro día.</div>`; return; }
   const ultimo = r.dias >= 3;
@@ -4135,8 +4148,16 @@ document.addEventListener('click', e => {
     case 'reactivar': abrirReactivar(d.row, d.origen); break;
     case 'editar': abrirEditar(d.row); break;
     case 'baja': abrirBaja(d.row); break;
-    case 'avisos-baja': abrirBaja(d.row, S.avisosDias); break;
-    case 'avisos-renovar': abrirRenovar(d.row, null, S.avisosDias); break;
+    case 'avisos-baja': guardarAvisos(); abrirBaja(d.row, S.avisosDias); break;
+    case 'avisos-renovar': guardarAvisos(); abrirRenovar(d.row, null, S.avisosDias); break;
+    case 'avisos-volver': {
+      const g = S.avisosGuardado, dd = d.d === 'mas' ? 'mas' : Number(d.d);
+      if (!g || g.dias !== dd) { abrirAvisosMora(d.d); break; }
+      // renovado o dado de baja: sale de la lista
+      if (d.quitar) { const q = Number(d.quitar); g.r = { ...g.r, items: g.r.items.filter(x => x.row !== q) }; g.marcadas = g.marcadas.filter(x => x !== q); }
+      abrirAvisosMora(d.d, g);
+      break;
+    }
     case 'avisos-ver': { const t = el.closest('.aviso-item').querySelector('.aviso-texto'); t.hidden = !t.hidden; el.setAttribute('aria-expanded', String(!t.hidden)); el.textContent = (t.hidden ? '▸' : '▾') + ' Ver mensaje'; break; }
     case 'pass-lugar': passDeLugar(d.hoja, d.fila); break;
     case 'pendientes': abrirPendientes(); break;
